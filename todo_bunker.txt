@@ -1,0 +1,80 @@
+# Plano de Ação Hardening FlipApp LogLineOS
+
+1. Dependência frágil de OpenAI
+   - [ ] Implementar fallback local no llm_proxy_hard.py usando modelo WASM (mistral.wasm ou similar)
+   - [ ] Adicionar cache semântico local (ex: Redis ou SQLite) indexado por hash do prompt
+   - [ ] Permitir troca de modelo via configuração (llm_config.logline)
+
+2. Proxy LLM sem defesa
+   - [ ] Adicionar timeout (ex: 10s) e retry (3 tentativas, backoff exponencial) em llm_proxy_hard.py
+   - [ ] Capturar exceções e logar em stderr com formato JSON
+   - [ ] Retornar erros padronizados (ex: {"error_code": "...", "message": "..."}) para spans
+
+3. Logger utils/logger.js é inútil
+   - [ ] Remover utils/logger.js ou integrar com audit.logline
+   - [ ] Refatorar chamadas de console.log para gerar spans audit_log_debug/info/error
+
+4. Testes insuficientes
+   - [ ] Criar test_logline/expect_state.logline
+   - [ ] Criar test_logline/expect_effect.logline
+   - [ ] Criar test_logline/expect_error.logline
+   - [ ] Escrever testes para:
+       - llm_response_contract.logline
+       - chat.logline
+       - audit.logline
+       - span_execution_rules.logline
+
+5. Contratos não versionados nem documentados
+   - [ ] Adicionar campos 'version', 'description', 'created_by' em todos contratos .logline
+   - [ ] Validar entradas/saídas usando tipos e required
+   - [ ] Incluir fallback para entradas inválidas (contrato reject_input)
+
+6. UI declarativa sem schema nem validação
+   - [ ] Definir schema JSON leve para cada tipo de componente UI (container, text, input, button)
+   - [ ] Implementar validate_ui_schema.logline que verifica arquivos UI antes de renderizar
+   - [ ] Adicionar fallback visual (ex: "Erro ao renderizar UI") caso o schema falhe
+
+7. Crescimento infinito de estado
+   - [ ] Desenvolver contrato rotate_logs (move spans antigos para arquivo de archive)
+   - [ ] Desenvolver contrato archive_spans (compacta e armazena spans antigos)
+   - [ ] Desenvolver contrato expire_state (remove chaves de estado antigas)
+   - [ ] Agendar via logline watch ou cron local (ex: run every midnight)
+   - [ ] Definir limites de tamanho para arquivos .jsonl (ex: max 50MB)
+
+8. Falta CLI simbólica
+   - [ ] Criar binário 'flip' (ex: Go/Cobra, Rust/Clap) que exponha:
+       - flip run -> inicia LogLineOS
+       - flip logs -> exibe últimos spans de audit
+       - flip audit -> executa auditoria de contratos (audit_contract_change.logline)
+       - flip test -> executa testes .logline
+   - [ ] Documentar uso da CLI em README.md
+
+9. Configuração dispersa
+   - [ ] Consolidar config em config.logline (mover qualquer env-config.sh para lá)
+   - [ ] Gerar automaticamente load_env.sh baseado em config.logline (script validate_config.sh)
+   - [ ] Remover env-config.sh, vite.config.js, .env e referências mortas
+
+10. Remover Docker
+    - [ ] Apagar Dockerfile, docker-compose.yml e pasta docker/
+    - [ ] Atualizar README.md com instruções de execução local (npx serve, flip run)
+    - [ ] Garantir que não há dependências ocultas em Docker
+
+11. Spans não têm validação nem fallback
+    - [ ] Criar span_validator.logline com regras de formato (type obrigatório, props válidas)
+    - [ ] Definir contratos de fallback para spans inválidos (ex: ignore_span ou log_error_span)
+    - [ ] Incluir validação no Kernel antes de processar spans
+
+12. Falha no isolamento do LLM
+    - [ ] Adicionar campo 'origin' (tenant_id ou user_id) em llm_request.logline
+    - [ ] Propagar context_id em todos spans deriváveis (eventos de resposta e logs)
+    - [ ] Garantir rastreabilidade completa: cada llm_response vinculado a origin/context_id
+
+13. Sem auditoria real de contratos
+    - [ ] Criar audit_contract_change.logline que registra mudanças em contratos
+    - [ ] Gerar assinatura simbólica (hash) de cada contrato no momento de carga
+    - [ ] Adicionar contrato log_contract_change que grava em audit_spans
+
+14. Sem simulação ou dry-run de spans
+    - [ ] Implementar modo 'simulate' em LogLine (parâmetro --simulate)
+    - [ ] Criar contrato noop_effect para spans sem efeito real (útil em simulate)
+    - [ ] Documentar no README.md modo de simulação e exemplos

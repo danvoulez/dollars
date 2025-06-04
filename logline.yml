@@ -1,0 +1,17 @@
+project:
+  name: "FlipApp LogLineOS"
+  version: "1.0.0-pure"
+  description: "A flagship application demonstrating 100% LogLineOS paradigm."
+  authors: ["Your Name"]
+  license: "MIT"
+  entry_point: "/ui/flipapp_ui.logline"
+  default_state: "/spans/state.jsonl"
+  default_audit_log: "/spans/audit.jsonl"
+  default_chat_history: "/spans/chat_history.jsonl"
+
+execution:
+  mode: "browser"
+  initial_contracts:
+    - "log_info(message='LogLineOS started')"
+    - "initialize_session"
+    - "load_ui"

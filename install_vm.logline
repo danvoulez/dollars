@@ -1,0 +1,46 @@
+# install_vm.logline
+# Roteiro auditável para instalação de um ambiente LogLineOS.
+
+- type: installation_step
+  id: "check_prerequisites"
+  description: "Verify if Node.js (for toolchain) and Rust/wasm-pack are installed."
+  commands:
+    - "node --version"
+    - "rustc --version"
+    - "wasm-pack --version"
+  expected_output: "version strings"
+  on_success_contract: "log_info(message='Prerequisites met')"
+  on_failure_contract: "log_error(message='Missing prerequisites. Please install Node.js and Rust/wasm-pack.'). Then fail_install_contract."
+
+- type: installation_step
+  id: "build_wasm_module"
+  description: "Compile the Rust WASM module."
+  commands:
+    - "cd rust_vm && wasm-pack build --target web --release"
+  on_success_contract: "log_info(message='WASM module built')"
+  on_failure_contract: "log_error(message='WASM build failed'). Then fail_install_contract."
+
+- type: installation_step
+  id: "install_frontend_dependencies"
+  description: "Install frontend JavaScript dependencies."
+  commands:
+    - "npm install"
+  on_success_contract: "log_info(message='Frontend dependencies installed')"
+  on_failure_contract: "log_error(message='Frontend dependencies install failed'). Then fail_install_contract."
+
+- type: installation_step
+  id: "start_local_http_server"
+  description: "Start the local HTTP server to serve the public/ directory."
+  commands:
+    - "logline run scripts/serve.py.logline --port 8080 --root public"
+  on_success_contract: "log_info(message='Local HTTP server running')"
+  on_failure_contract: "log_error(message='Failed to start local HTTP server'). Then fail_install_contract."
+
+- type: contract
+  name: fail_install_contract
+  effects:
+    - type: ui_notification
+      level: "critical"
+      content: "Instalação do LogLineOS falhou! Verifique os logs."
+    - type: audit_log_error
+      message: "Fatal installation failure."
