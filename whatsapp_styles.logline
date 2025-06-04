@@ -1,0 +1,32 @@
+# Design tokens para identidade visual do WhatsApp Web
+# Autor: danvoulez
+# Data: 2025-06-04
+
+- type: token
+  token: whatsapp_theme
+  values:
+    default:
+      color:
+        background: "#ECE5DD"
+        sidebar_bg: "#111b21"
+        sidebar_text: "#ffffff"
+        header_bg: "#128C7E"
+        header_text: "#ffffff"
+        bubble_incoming: "#FFFFFF"
+        bubble_outgoing: "#DCF8C6"
+        text_primary: "#303030"
+        text_secondary: "#717171"
+        accent: "#34B7F1"
+        border: "#E0E0E0"
+      layout:
+        sidebar_width: "300px"
+        header_height: "56px"
+        bubble_radius: "8px"
+        spacing_md: "1rem"
+      typography:
+        font_family: "Helvetica, Arial, sans-serif"
+        font_size_base: "14px"
+        font_size_sm: "12px"
+      shadow:
+        bubble: "0 1px 2px rgba(0,0,0,0.1)"
+        sidebar: "0 2px 4px rgba(0,0,0,0.2)"

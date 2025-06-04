@@ -1,0 +1,75 @@
+# Contratos para validar schemas de componentes UI antes da renderização
+
+- type: contract_definition
+  name: ui_schema_validation
+  version: "1.0.0"
+  description: "Valida esquema básico dos componentes UI em arquivos .logline"
+  created_by: "LogLineOS"
+  args_schema:
+    file_path:
+      type: string
+      required: true
+    selector:
+      type: string
+      default: "#app_root"
+  effects:
+    - id: "validate_schema"
+      type: kernel_action
+      action_type: validate_json_schema
+      schema_template: |
+        {
+          "type": ["object"],
+          "required": ["type"],
+          "properties": {
+            "type": { "type": "string" },
+            "class": { "type": "string" },
+            "style": { "type": "string" },
+            "token": { "type": "object" },
+            "content": {},
+            "children": { "type": "array" },
+            "when": { "type": "string" },
+            "loop": { "type": "object" },
+            "bind": { "type": "string" },
+            "on": { "type": "string" },
+            "variant": {}
+          },
+          "additionalProperties": true
+        }
+      data_template: "{{kernel.read_file(args.file_path)}}"
+      error_next_span_id: "handle_ui_schema_error"
+    - type: audit_log
+      level: "info"
+      message: "UI schema validado com sucesso: {{args.file_path}}"
+    - type: execution_end
+
+- type: contract_definition
+  name: handle_ui_schema_error
+  version: "1.0.0"
+  description: "Fallback de UI quando schema falha na validação"
+  created_by: "LogLineOS"
+  args_schema:
+    error:
+      type: object
+      required: true
+    file_path:
+      type: string
+      required: true
+    selector:
+      type: string
+      default: "#app_root"
+  effects:
+    - type: ui_notification
+      level: "error"
+      content: |
+        Erro ao validar UI em {{args.file_path}}:
+        {{args.error.message}}
+      duration_ms: 8000
+    - type: ui_render_static
+      selector: "{{args.selector}}"
+      content: "<div class='ui-error'>Erro ao renderizar componente UI</div>"
+    - type: audit_log
+      level: "error"
+      message: >
+        Schema validation failed for {{args.file_path}}:
+        {{args.error | json}}
+    - type: execution_end

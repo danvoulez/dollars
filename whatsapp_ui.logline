@@ -1,0 +1,82 @@
+# Interface principal do módulo WhatsApp Web
+# Autor: danvoulez
+# Data: 2025-06-04
+
+- type: container
+  class: "whatsapp-root"
+  token: 
+    display: "flex"
+    height: "100vh"
+    font-family: "{{token('whatsapp_theme.typography.font_family')}}"
+    background: "{{token('whatsapp_theme.color.background')}}"
+  children:
+    # Sidebar de conversas
+    - type: container
+      class: "whatsapp-sidebar"
+      token:
+        width: "{{token('whatsapp_theme.layout.sidebar_width')}}"
+        background: "{{token('whatsapp_theme.color.sidebar_bg')}}"
+        color: "{{token('whatsapp_theme.color.sidebar_text')}}"
+        overflow-y: "auto"
+    # Área de chat
+    - type: container
+      class: "whatsapp-chat-area"
+      token:
+        flex: "1"
+        display: "flex"
+        flex-direction: "column"
+    # Header do chat ativo
+    - type: container
+      class: "whatsapp-header"
+      token:
+        height: "{{token('whatsapp_theme.layout.header_height')}}"
+        background: "{{token('whatsapp_theme.color.header_bg')}}"
+        color: "{{token('whatsapp_theme.color.header_text')}}"
+        display: "flex"
+        align-items: "center"
+        padding: "0 {{token('whatsapp_theme.layout.spacing_md')}}"
+      children:
+        - type: text
+          class: "chat-with-name"
+          content: "{{state.conversations[state.active_conversation].name}}"
+          token:
+            font-size: "16px"
+            font-weight: "bold"
+    # Histórico de mensagens
+    - type: container
+      class: "whatsapp-messages"
+      token:
+        flex: "1"
+        overflow-y: "auto"
+        padding: "{{token('whatsapp_theme.layout.spacing_md')}}"
+      children:
+        - type: loop
+          data: "state.messages[state.active_conversation]"
+          children:
+            - type: ChatMessage
+              sender: "{{item.sender}}"
+              content: "{{item.content}}"
+              timestamp: "{{item.timestamp}}"
+              class: "{{item.sender === 'user' ? 'outgoing' : 'incoming'}}"
+    # Área de digitação
+    - type: container
+      class: "whatsapp-input-area"
+      token:
+        display: "flex"
+        padding: "{{token('whatsapp_theme.layout.spacing_md')}}"
+        border-top: "1px solid {{token('whatsapp_theme.color.border')}}"
+      children:
+        - type: input
+          bind: "state.input_message | userTypingDebounce"
+          placeholder: "Digite uma mensagem..."
+          token:
+            flex: "1"
+            padding: "0.5rem"
+            border: "1px solid {{token('whatsapp_theme.color.border')}}"
+            border-radius: "50px"
+            font-size: "{{token('whatsapp_theme.typography.font_size_base')}}"
+        - type: Button
+          content: "Enviar"
+          variant: "primary"
+          onClick: "sendMessage"
+          disabled: "{{!state.input_message || state.input_message.trim() === ''}}"

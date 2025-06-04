@@ -1,0 +1,249 @@
+# state.logline
+# Estado global da aplicação FlipApp LogLineOS + WhatsApp
+# Autor: danvoulez
+# Data: 2025-06-04
+
+# Estado do usuário e sessão
+user_id: ""
+session_id: ""
+app_version: "1.0.0-loglineos"
+last_activity: ""
+
+# Estado do chat WhatsApp
+conversations: {}
+  # conversation_id: {
+  #   name: string,
+  #   unread: int,
+  #   last_message: string,
+  #   last_timestamp: string,
+  #   avatar_url: string,
+  #   status: "active"|"archived"|"blocked",
+  #   ghost_sale_status: null|"tracking"|"completed"|"aborted"
+  # }
+
+active_conversation: ""
+input_message: ""
+messages: {}
+  # conversation_id: [
+  #   {
+  #     id: string,
+  #     sender: "user"|"bot"|"system",
+  #     content: string,
+  #     timestamp: string,
+  #     status: "sent"|"delivered"|"read",
+  #     type: "text"|"audio"|"image"|"document",
+  #     media_url: string|null,
+  #     transcription: string|null,
+  #     translation: string|null,
+  #     show_original: boolean,
+  #     feedback_tag: null|"good"|"bad_translation"|"ignored"
+  #   }
+  # ]
+
+# Estados de erro e loading
+error: null
+loading: false
+typing_indicator: false
+
+# Sistema Ghost Sale
+ghost_sales: {}
+  # conversation_id: {
+  #   id: string,
+  #   status: "init"|"tracking"|"committed"|"aborted",
+  #   start_time: string,
+  #   end_time: string|null,
+  #   events: [
+  #     {
+  #       type: "incentive"|"pressure"|"commitment"|"abandonment",
+  #       timestamp: string,
+  #       context: object
+  #     }
+  #   ],
+  #   penalty_score: int,
+  #   agent_id: string
+  # }
+
+# Sistema de Auditoria e Julgamento
+affairs: []
+  # [
+  #   {
+  #     id: string,
+  #     type: "ghost_sale"|"agent_misconduct"|"system_violation",
+  #     status: "pending"|"investigating"|"resolved"|"dismissed",
+  #     created_at: string,
+  #     evidence: object,
+  #     involved_parties: [string],
+  #     resolution: object|null
+  #   }
+  # ]
+
+judgements: []
+  # [
+  #   {
+  #     id: string,
+  #     type: "fail_sale"|"negligence"|"misconduct",
+  #     target: string, # agent_id
+  #     timestamp: string,
+  #     evidence: object,
+  #     status: "pending"|"confirmed"|"appealed"|"dismissed",
+  #     penalty_applied: object|null
+  #   }
+  # ]
+
+# Intervenções do Agente Simbólico
+agent_interventions: []
+  # [
+  #   {
+  #     id: string,
+  #     conversation_id: string,
+  #     context_hash: string,
+  #     policy_used: string,
+  #     analysis: object,
+  #     action: "suggest"|"alert"|"intervene"|"escalate",
+  #     timestamp: string,
+  #     result: object|null
+  #   }
+  # ]
+
+# Sistema de Alertas
+alerts: []
+  # [
+  #   {
+  #     id: string,
+  #     level: int, # 1-10
+  #     type: "risk"|"capacity"|"system"|"agent",
+  #     message: string,
+  #     conversation_id: string|null,
+  #     timestamp: string,
+  #     acknowledged: boolean,
+  #     action_taken: string|null
+  #   }
+  # ]
+
+# Resumos de Conversas
+summaries: {}
+  # conversation_id: {
+  #   content: string,
+  #   timestamp: string,
+  #   tokens_used: int,
+  #   confidence: float
+  # }
+
+# Sistema de Treinamento
+training_samples: []
+  # [
+  #   {
+  #     id: string,
+  #     message_id: string,
+  #     tag: "good"|"bad_translation"|"ignored",
+  #     timestamp: string,
+  #     context: object,
+  #     original_content: string,
+  #     corrected_content: string|null
+  #   }
+  # ]
+
+# Métricas e Capacidade do Sistema
+system_load: []
+  # [
+  #   {
+  #     timestamp: string,
+  #     cpu_usage: float,
+  #     memory_usage: float,
+  #     active_conversations: int,
+  #     messages_per_minute: int,
+  #     llm_calls_per_minute: int
+  #   }
+  # ] # Manter apenas últimas 1440 entradas (24h)
+
+message_counter: 0
+daily_message_limit_reached: false
+
+# Gestão de Agentes
+agents: {}
+  # agent_id: {
+  #   name: string,
+  #   status: "active"|"suspended"|"training"|"inactive",
+  #   penalty_score: int,
+  #   last_activity: string,
+  #   assigned_conversations: [string],
+  #   performance_metrics: {
+  #     successful_sales: int,
+  #     ghost_sales_detected: int,
+  #     interventions_made: int,
+  #     accuracy_score: float
+  #   }
+  # }
+
+# Configurações Dinâmicas
+config:
+  llm_model: "gpt-4"
+  max_conversations: 50
+  daily_msg_limit: 1000
+  risk_threshold: 7
+  auto_translate: true
+  haptic_feedback: true
+  sound_effects: true
+  dark_mode: false
+  language: "pt-BR"
+  api_endpoints:
+    whatsapp_api: "https://api.whatsapp.com/v1"
+    llm_proxy: "http://localhost:8001"
+    translation_api: "builtin"
+    transcription_api: "builtin"
+  timeouts:
+    http_request: 30000
+    llm_response: 60000
+    file_upload: 120000
+
+# Políticas de Agentes
+agent_policies:
+  default_agent_policy:
+    analysis_model: "gpt-4"
+    prompt_template: "Analise a conversa e identifique possíveis vendas fantasma ou comportamentos suspeitos."
+    risk_threshold: 5
+    intervention_rules:
+      - condition: "ghost_sale_detected"
+        action: "suggest"
+      - condition: "high_risk_behavior"
+        action: "alert"
+      - condition: "critical_violation"
+        action: "escalate"
+  
+  strict_agent_policy:
+    analysis_model: "gpt-4"
+    prompt_template: "Aplique análise rigorosa para detectar qualquer irregularidade na conversa."
+    risk_threshold: 3
+    intervention_rules:
+      - condition: "any_suspicion"
+        action: "intervene"
+
+# Estados temporários (limpeza automática)
+temp:
+  ui_loading: false
+  last_llm_call: null
+  pending_uploads: []
+  websocket_status: "disconnected"
+  simulation_mode: false
+
+# Conexões ativas
+connections:
+  whatsapp_ws: 
+    status: "disconnected"
+    last_ping: null
+    reconnect_attempts: 0
+  llm_proxy:
+    status: "disconnected"
+    last_request: null
+    queue_size: 0
+
+# Dados de UI específicos
+ui:
+  sidebar_collapsed: false
+  active_tab: "chat"
+  theme: "whatsapp_default"
+  zoom_level: 1.0
+  notifications_enabled: true
+  scroll_positions: {}
+  selected_messages: []
+  context_menu_open: false

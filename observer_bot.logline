@@ -1,0 +1,169 @@
+[
+  {
+    "id": "observer_bot_engine_def",
+    "timestamp": "2025-06-04T10:05:46Z",
+    "type": "engine_definition",
+    "name": "Observer Bot Engine",
+    "description": "Monitora mensagens WhatsApp e executa pipeline de processamento automático",
+    "version": "1.0.0-loglineos"
+  },
+
+  {
+    "id": "continuous_whatsapp_observer",
+    "timestamp": "2025-06-04T10:05:46Z",
+    "type": "continuous_rule",
+    "description": "Observa mensagens WebSocket do WhatsApp",
+    "trigger": {
+      "type": "websocket_message",
+      "url": "wss://api.flipapp/whatsapp/{{state.user_id}}"
+    },
+    "effects": [
+      {
+        "type": "audit_log",
+        "level": "info",
+        "message": "Nova mensagem WhatsApp recebida",
+        "context": {
+          "conversation_id": "{{message.conversation_id}}",
+          "sender": "{{message.sender}}",
+          "content_preview": "{{message.text | truncate(50)}}"
+        }
+      },
+      {
+        "type": "when",
+        "when": "!state.messages[message.conversation_id]",
+        "effects": [
+          {
+            "type": "contract_call",
+            "contract_name": "load_chat_history",
+            "args": {
+              "conversation_id": "{{message.conversation_id}}"
+            }
+          }
+        ]
+      },
+      {
+        "type": "contract_call",
+        "contract_name": "detect_language",
+        "args": {
+          "text": "{{message.text}}"
+        },
+        "response_path": "temp.detected_language"
+      },
+      {
+        "type": "when",
+        "when": "temp.detected_language.language != 'pt'",
+        "effects": [
+          {
+            "type": "contract_call",
+            "contract_name": "translate_message",
+            "args": {
+              "text": "{{message.text}}",
+              "source": "{{temp.detected_language.language}}",
+              "target": "pt"
+            },
+            "response_path": "temp.translated_message"
+          }
+        ]
+      },
+      {
+        "type": "when",
+        "when": "message.media_type == 'audio'",
+        "effects": [
+          {
+            "type": "contract_call",
+            "contract_name": "transcribe_audio",
+            "args": {
+              "audio": "{{message.content}}"
+            },
+            "response_path": "temp.transcription"
+          }
+        ]
+      },
+      {
+        "type": "kernel_action",
+        "action_type": "execute_function",
+        "function_name": "compute_risk",
+        "args": {
+          "text": "{{message.text}}"
+        },
+        "response_path": "temp.risk_level"
+      },
+      {
+        "type": "contract_call",
+        "contract_name": "raise_alert",
+        "args": {
+          "message": "{{message.text}}",
+          "level": "{{temp.risk_level}}"
+        }
+      },
+      {
+        "type": "state_mutation",
+        "path": "message_counter",
+        "operation": "increment",
+        "value": 1
+      },
+      {
+        "type": "when",
+        "when": "state.message_counter > state.config.daily_msg_limit",
+        "effects": [
+          {
+            "type": "contract_call",
+            "contract_name": "raise_alert",
+            "args": {
+              "level": 9,
+              "message": "Daily message limit exceeded"
+            }
+          }
+        ]
+      },
+      {
+        "type": "contract_call",
+        "contract_name": "receive_whatsapp_message",
+        "args": {
+          "conversation_id": "{{message.conversation_id}}",
+          "sender": "{{message.sender}}",
+          "content": "{{message.text}}",
+          "media_type": "{{message.media_type}}",
+          "timestamp": "{{timestamp_now}}",
+          "translated": "{{temp.translated_message.translated || ''}}",
+          "transcription": "{{temp.transcription.transcription || ''}}"
+        }
+      }
+    ]
+  },
+
+  {
+    "id": "daily_cleanup_scheduler",
+    "timestamp": "2025-06-04T10:05:46Z",
+    "type": "continuous_rule",
+    "description": "Executa limpeza diária à meia-noite",
+    "trigger": {
+      "type": "scheduler",
+      "cron": "0 0 * * *"
+    },
+    "effects": [
+      {
+        "type": "contract_call",
+        "contract_name": "rotate_logs"
+      },
+      {
+        "type": "contract_call",
+        "contract_name": "archive_spans"
+      },
+      {
+        "type": "contract_call",
+        "contract_name": "expire_state"
+      },
+      {
+        "type": "state_mutation",
+        "path": "message_counter",
+        "value": 0
+      },
+      {
+        "type": "audit_log",
+        "level": "info",
+        "message": "Daily cleanup completed"
+      }
+    ]
+  }
+]

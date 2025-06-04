@@ -1,0 +1,9 @@
+# Teste de validação de schema para chat_ui.logline
+- type: test
+  description: "Contrato ui_schema_validation deve aceitar chat_ui.logline sem erros"
+  expect_effect:
+    contract: "ui_schema_validation"
+    applied: true
+  args:
+    file_path: "ui/chat_ui.logline"
+    selector: "#app_root"

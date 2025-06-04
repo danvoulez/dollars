@@ -1,0 +1,80 @@
+# Testes end-to-end para o módulo WhatsApp
+
+- type: test
+  description: "Cria uma nova conversa e envia mensagem"
+  setup:
+    - type: state_reset
+    - type: state_set
+      path: "state.conversations.conv1"
+      value:
+        name: "Teste"
+        unread: 0
+        last_message: ""
+        last_timestamp: ""
+        avatar_url: ""
+        status: "active"
+        ghost_sale_status: null
+    - type: state_set
+      path: "state.active_conversation"
+      value: "conv1"
+  steps:
+    - type: contract_call
+      contract_name: "send_whatsapp_message"
+      args:
+        conversation_id: "conv1"
+        content: "Olá, mundo!"
+      expect_effect:
+        type: kernel_action
+        action_type: "invoke_native_send_message"
+    - type: state_assert
+      path: "state.messages.conv1[-1].content"
+      should: equal
+      value: "Olá, mundo!"
+    - type: state_assert
+      path: "state.messages.conv1[-1].sender"
+      should: equal
+      value: "user"
+
+- type: test
+  description: "Detecta ghost sale na conversa"
+  setup:
+    - type: state_set
+      path: "state.ghost_sales.conv1"
+      value:
+        id: "gs1"
+        status: "init"
+        start_time: "2025-06-04T10:00:00Z"
+        end_time: null
+        events: []
+        penalty_score: 0
+        agent_id: "agent1"
+  steps:
+    - type: contract_call
+      contract_name: "detect_ghost_sale"
+      args:
+        conversation_id: "conv1"
+    - type: state_assert
+      path: "state.ghost_sales.conv1.status"
+      should: equal
+      value: "tracking"
+
+- type: test
+  description: "Recebe mensagem do bot e registra estado"
+  setup:
+    - type: state_set
+      path: "state.messages.conv1"
+      value: []
+  steps:
+    - type: contract_call
+      contract_name: "receive_whatsapp_message"
+      args:
+        conversation_id: "conv1"
+        content: "Resposta automática"
+    - type: state_assert
+      path: "state.messages.conv1[-1].sender"
+      should: equal
+      value: "bot"
+    - type: state_assert
+      path: "state.messages.conv1[-1].content"
+      should: equal
+      value: "Resposta automática"

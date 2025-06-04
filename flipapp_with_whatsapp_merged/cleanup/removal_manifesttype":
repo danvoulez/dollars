@@ -1,0 +1,159 @@
+            "when": "state.active_conversation",
+            "children": [
+              {.logline
+# Removal Manifest for Deprecated Dependencies
+cleanup_manifest:
+  deprecate
+                "type": "container",
+                "id_files:
+    - path: "docker/"
+      reason:d": "chat_header",
+                "class": "chat-header",
+                "style": { "Docker containerization deprecated in favor of local binary
+                  "backgroundColor": "#128C7E",
+                  "padding": "15px 20px",
+                  "display": "flex",
+                   execution"
+      action: "remove_directory"
+    - path: "deployment/Dockerfile"
+      "alignItems": "center",
+                  "justifyContent": "space-between",
+                reason: "Docker deployment deprecated"
+      action: "remove_file"
+    -  "borderBottom": "1px solid #0e7a6e"
+                },
+                "children": [
+                  {
+                    "type": "container",
+                    "style": {
+                      "display": "flex",
+                      "alignItems": "center",
+                      "gap": "12px"
+                    },
+                    "children": [
+                 path: "deployment/docker-compose.yml"
+      reason: "      {
+                        "type": "button",
+                        "class": "back-button mobileDocker compose deprecated"
+      action: "remove_file"
+    - path: "docker/nginx-only",
+                        "style": {.conf"
+      reason: "
+                          "background": "none",
+                          "border": "none",
+                Nginx config no longer needed"
+      action: "remove_file"
+    - path          "color": "#ffffff",
+                          "fontSize": "18px",
+                          "cursor": "pointer",
+                          ": "config/env-config.sh"
+      reasonpadding": "5px",
+                          "display": "none"
+                        },
+                        "content: "Replaced by runtime_config.logline"
+      ": "←",
+                        "onClick": "close_chat"
+                      },
+                      {
+                        "action: "remove_file"
+    - path: "node_modules/"
+      reason: "Nodetype": "container",
+                        "class": "conversation-avatar",
+                .js dependencies removed"
+      action        "style": {
+                          "width": "40px",
+                          "height": "40px",
+                          "borderRadius": "50%",
+                          ": "remove_directory"
+    - path: "package.json"backgroundColor": "#ffffff",
+                          "display": "flex",
+                          "alignItems": "center",
+                          "justifyContent": "center
+      reason: "Node.js package management",
+                          "color": "#128 deprecated"
+      action: "remove_file"
+    - path:C7E",
+                          "fontSize": "16px",
+                          "fontWeight "vite.config.js": "bold"
+                        },
+                        "content": "{{state.conversations[state.active_conversation] ? state.conversations[state.active_conversation].name"
+      reason: "Vite build system deprecated"
+      action: "remove_file".charAt(0).toUpperCase() : 'C'}}"
+                      },
+                      {
+                        "type": "text",
+                        "content": "{{state.conversations[state.active_conversation] ? state.conversations[state.active_conversation].name : '
+    - path: "jest.config.jsConversa'}}",
+                        "style": {
+                          "color": "#ffffff",
+                          "fontSize": "16px",
+                          "fontWeight": "500"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    ""
+      reason: "Jest testing deprecated in favor of Logtype": "container",
+                    "style": {
+                      "display": "flexLine tests"
+      action: "remove_file"
+
+  replacement_files:
+    - old:",
+                      "alignItems": "center",
+                      "gap": "15px"
+                    },
+                    " "config/env-config.sh"
+      new: "children": [
+                      {
+                        "type": "button",
+                        "config/runtime_config.logline"
+      migration: "Convertclass": "action-button",
+                         shell variables to YAML config"
+    -"style": {
+                          "background": old: "Docker deployment"
+      new: "Binary release via Makefile"
+      migration: "Use make build and make release"
+
+execution_rules "none",
+                          "border": "none",
+                          "color": "#ffffff",
+                          "fontSize": "18px",
+                          "cursor": "pointer",:
+  - name: "execute_cleanup"
+    trigger: "manual"
+    actions:
+      - type: "shell
+                          "padding": "8px",
+                          "borderRadius": "50%",
+                          "transition": "background-color 0.2s ease"
+                        },
+                        "content": "📹",
+                        "onClick": "start_video_call"
+                      },
+                      {
+                        "_command"
+        command: "rm -rf docker/ deployment/Dockerfile deployment/type": "button",
+                        "class": "action-button",
+                        "style": {
+                          "background": "none",
+                          "border": "none",
+                          "color": "#ffffff",docker-compose.yml docker/nginx.conf config/env-config.sh node
+                          "fontSize": "18px",
+                          "cursor": "pointer",
+                          "padding": "8px",
+                          "borderRadius": "50%",
+                          "transition": "background-color_modules/ package.json vite 0.2s ease"
+                        },
+                        "content": "📞.config.js jest.config.",
+                        "onClick": "start_voice_call"
+                      },
+                      {
+                        "type": "buttonjs"
+      - type: "audit_log"
+        message: "Deprecated dependencies removed successfully",
+                        "class": "action-button",
+                        "style": {
+                          "background": "none",
+                "

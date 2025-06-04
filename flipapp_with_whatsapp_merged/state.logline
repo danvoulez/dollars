@@ -1,0 +1,122 @@
+# Fl "whatsapp"
+  - "high-priority"
+tag: "whatsapp-ui-ipApp + WhatsApp Merged State Definition
+state:
+  # User and conversation management
+  user_id: string
+  implementation"
+description: |
+  # WhatsApp UI Implementationconversations: 
+    type: map
+    key: conversation_id
+    value:
+
+  ## Overview
+  Implementation of WhatsApp-
+      name: string
+      style UI components following the exact specifications provided for FlipApp + WhatsApp integration.
+
+  ## Core Components to Create/Updateunread: int
+      last_message_time: string
+      avatar_url: string
+      ghost_sale_active: boolean
+  active_conversation: string
+  input_message: string
+  
+
+  ### 1. ui/whatsapp_ui.logline
+  Main WhatsApp container with:
+  - Sidebar (300px width, #111b21messages:
+    type: map
+    key: conversation_id
+    value:
+      type: array
+      items:
+        id: string
+         background)
+  - Chat panel (flex:1, #ECE5DD background)
+  -sender: string
+        content: string
+        timestamp: string
+        status Responsive design (<600px collapses sidebar: string # sent, delivered, read
+        message_type: string # text, audio, image)
+
+  ### 2. ui/whatsapp_message_bubble.logline
+  Message bubble component with:
+  - Own messages: #DCF8C6,, document
+        translated_content: string
+        show_original: boolean
+        transcription: string
+        feedback_tag borderRadius:"10px 0px 10px 10px"
+  - Received messages: #FFFFFF: string
+  error: string
+
+  # Ghost Sales tracking
+  ghost_sales, borderRadius:"0px 10px 10px 10px"
+  - Translation:
+    type: map
+    key: conversation_id
+    value:
+      id: string
+       toggle (🌐 icon)
+  - Audio transcription support
+  - Feedback buttons (👍, ⚠️, 🚫)
+  - Timestampstatus: string # active, tracking formatting
+  - Read indicators (✓, ✓✓)
+
+  ### 3, committed, aborted
+      start_time: string
+      end_. ui/whatsapp_styles.logline
+  Complete styling system with:
+  - Official WhatsApp colors (#time: string
+      incentives_sent: int
+      customer_responses: int
+      conversion_probability: float
+      abandonment_risk: float
+      111b21, #202c33, #00a884, #ECE5DD)
+  - Helvetica Neue font family
+  - Custom scrollbars
+  - Hoverintervention_count: int effects
+  - Dark mode support
+
+  # Agent and judgment system
+  affairs: 
+    type: array
+    items:
+
+  ### 4. ui/helper_functions.logline
+  Helper functions including:
+  - format_time_whatsapp()
+  - compute_risk()
+  - hash()
+  - current_context()
+  - open
+      id: string
+      type: string
+      status: string
+      created_at: string_media_picker()
+
+  ## Styling Requirements
+  - Colors: #111b21
+      evidence: object
+  judgements:
+    type: array
+    items:
+       (sidebar), #202c33 (hover), #00a884 (badges), #ECE5id: string
+      type: string # fail_sale, negligence
+      target: string # agent_id
+      timestampDD (chat bg)
+  - Font: ": string
+      evidence: object
+      statusHelvetica Neue", sans-serif
+  - Layout: Sidebar + chat responsive design
+  - Animations: Smooth hover transitions
+  - Mobile-first responsive design
+
+  ## Implementation Details: string # pending, resolved
+  agent_interventions:
+    type: array
+    items:
+  All components must be implemented as Log
+      id: string
+      conversation_id: stringLine spans with proper state bindings and event handlers.
