@@ -1,0 +1,48 @@
+ui component conversation_item {
+  props: conversation
+  view {
+    card {
+      if state.ghost_sales[props.id]?.status == "initiated" {
+        badge(color: "blue", icon: "ghost", text: "Venda Fantasma Ativa")
+      }
+      if state.ghost_sales[props.id]?.status == "aborted" {
+        badge(color: "red", icon: "warning", text: "ABANDONO: " + state.ghost_sales[props.id].end_reason)
+      }
+      for message in props.messages {
+        component whatsapp_message(message: message)
+      }
+      button_group {
+        button("Venda Concluída", on_click: { call ghost_sale_commit(props.id) })
+        button("Ignorado", on_click: { call log_user_feedback(props.id, "ignored") })
+      }
+    }
+  }
+}
+
+ui component whatsapp_message {
+  props: message
+  state { show_original: false }
+  view {
+    card {
+      toggle_button(
+        label: state.show_original ? "Ver Tradução" : "Ver Original",
+        on_click: { state.show_original = !state.show_original }
+      )
+      text_block(
+        content: state.show_original 
+          ? props.message.original 
+          : props.message.translated,
+        highlight: props.from_agent ? "verde_escuro" : "padrao"
+      )
+      if props.message.transcription {
+        expandable_section("Transcrição") {
+          text_block(props.message.transcription)
+        }
+      }
+      button_group {
+        button("Boa resposta", on_click: call log_user_feedback(props.id, "positive"))
+        button("Tradução errada", on_click: call log_user_feedback(props.id, "translation_error"))
+      }
+    }
+  }
+}

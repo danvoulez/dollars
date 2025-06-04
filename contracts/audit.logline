@@ -1,0 +1,29 @@
+# contracts/audit.logline
+# Definição de spans de auditoria e contratos de logging.
+
+- type: span_definition
+  name: "audit_log_info"
+  properties:
+    message: "string"
+    context: "object"
+
+- type: contract
+  name: log_debug
+  args:
+    message: "string"
+    context: "object"
+  effects:
+    - type: audit_log_debug
+      message: "{{args.message}}"
+      context: "{{args.context}}"
+
+- type: contract
+  name: log_error
+  args:
+    message: "string"
+    error_obj: "object"
+  effects:
+    - type: audit_log_error
+      message: "{{args.message}}"
+      error: "{{args.error_obj.message}}"
+      stack: "{{args.error_obj.stack}}"

@@ -1,0 +1,126 @@
+[
+  {
+    "id": "binary_release_manifest",
+    "timestamp": "2025-06-04T02:17:00Z",
+    "type": "release_manifest",
+    "name": "FlipApp LogLineOS Binary Release",
+    "description": "Defines how to package and distribute the flip CLI binary",
+    "version": "1.0.0-loglineos"
+  },
+
+  {
+    "id": "build_targets",
+    "timestamp": "2025-06-04T02:17:05Z",
+    "type": "build_configuration",
+    "name": "Cross-platform build targets",
+    "targets": [
+      {
+        "platform": "linux",
+        "arch": "amd64",
+        "binary_name": "flip-linux-amd64",
+        "build_command": "GOOS=linux GOARCH=amd64 go build -o flip-linux-amd64 ."
+      },
+      {
+        "platform": "darwin",
+        "arch": "amd64",
+        "binary_name": "flip-darwin-amd64",
+        "build_command": "GOOS=darwin GOARCH=amd64 go build -o flip-darwin-amd64 ."
+      },
+      {
+        "platform": "darwin",
+        "arch": "arm64",
+        "binary_name": "flip-darwin-arm64",
+        "build_command": "GOOS=darwin GOARCH=arm64 go build -o flip-darwin-arm64 ."
+      },
+      {
+        "platform": "windows",
+        "arch": "amd64",
+        "binary_name": "flip-windows-amd64.exe",
+        "build_command": "GOOS=windows GOARCH=amd64 go build -o flip-windows-amd64.exe ."
+      },
+      {
+        "platform": "js",
+        "arch": "wasm",
+        "binary_name": "executor.wasm",
+        "build_command": "GOOS=js GOARCH=wasm go build -o executor.wasm ."
+      }
+    ]
+  },
+
+  {
+    "id": "installation_methods",
+    "timestamp": "2025-06-04T02:17:10Z",
+    "type": "installation_configuration",
+    "name": "Installation methods for flip CLI",
+    "methods": [
+      {
+        "method": "direct_download",
+        "description": "Direct binary download from GitHub releases",
+        "instructions": [
+          "Visit https://github.com/your-org/flipapp/releases",
+          "Download the appropriate binary for your platform",
+          "Move to PATH (e.g., /usr/local/bin/flip)",
+          "Make executable: chmod +x flip"
+        ]
+      },
+      {
+        "method": "curl_install",
+        "description": "One-liner curl installation script",
+        "command": "curl -fsSL https://raw.githubusercontent.com/your-org/flipapp/main/install.sh | bash"
+      },
+      {
+        "method": "go_install",
+        "description": "Install via Go toolchain",
+        "command": "go install github.com/your-org/flipapp/cmd/flip@latest"
+      },
+      {
+        "method": "homebrew",
+        "description": "macOS Homebrew installation",
+        "commands": [
+          "brew tap your-org/flip",
+          "brew install flip"
+        ]
+      }
+    ]
+  },
+
+  {
+    "id": "release_checklist",
+    "timestamp": "2025-06-04T02:17:15Z",
+    "type": "process_definition",
+    "name": "Release process checklist",
+    "steps": [
+      {
+        "step": "version_bump",
+        "description": "Update version in runtime/config.logline and Go files"
+      },
+      {
+        "step": "run_tests",
+        "description": "Execute full test suite",
+        "command": "flip test unit && flip test integration"
+      },
+      {
+        "step": "build_binaries",
+        "description": "Build all platform binaries",
+        "script": "scripts/build-all.sh"
+      },
+      {
+        "step": "create_checksums",
+        "description": "Generate SHA256 checksums for all binaries",
+        "command": "sha256sum flip-* > checksums.txt"
+      },
+      {
+        "step": "create_release",
+        "description": "Create GitHub release with binaries and checksums"
+      },
+      {
+        "step": "update_install_script",
+        "description": "Update install.sh with new version and checksums"
+      },
+      {
+        "step": "test_installation",
+        "description": "Test installation methods on clean systems"
+      }
+    ]
+  }
+]

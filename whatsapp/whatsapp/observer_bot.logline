@@ -1,0 +1,22 @@
+contract observe_whatsapp_socket {
+  continuous on message_received(msg) {
+    call ghost_sale_init(message_id: msg.id)
+    let lang = call detect_language(text: msg.text)
+    let translated = call translate_message({
+      text: msg.text,
+      source: lang.language,
+      target: "pt"
+    })
+    if msg.media_type == "audio" {
+      msg.transcription = call transcribe_audio(msg.content)
+    }
+    // Detecção de emergência
+    let emergency = ["urgente", "socorro", "acidente"].some(word => msg.text.includes(word))
+    if emergency {
+      call raise_alert({ message: msg.text, level: 9 })
+    }
+    if unread_count(msg.conversation_id) > 20 {
+      call summarize_conversation({ conversation_id: msg.conversation_id })
+    }
+  }
+}

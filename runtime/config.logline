@@ -1,0 +1,122 @@
+[
+  {
+    "id": "config_app_meta",
+    "timestamp": "2025-06-04T02:16:24Z",
+    "type": "config_param",
+    "key": "app_name",
+    "value": "LogLineOS",
+    "description": "Application name displayed in UI"
+  },
+  {
+    "id": "config_app_version",
+    "timestamp": "2025-06-04T02:16:29Z",
+    "type": "config_param",
+    "key": "app_version",
+    "value": "1.0.0-loglineos",
+    "description": "Current application version"
+  },
+  {
+    "id": "config_app_entry_point",
+    "timestamp": "2025-06-04T02:16:34Z",
+    "type": "config_param",
+    "key": "app_entry_point",
+    "value": "/ui/flipapp_ui.logline",
+    "description": "Main UI entry point file path"
+  },
+  {
+    "id": "config_default_llm_model",
+    "timestamp": "2025-06-04T02:16:39Z",
+    "type": "config_param",
+    "key": "default_llm_model",
+    "value": "gpt-4",
+    "description": "Default LLM model for chat interactions"
+  },
+  {
+    "id": "config_llm_api_base_url",
+    "timestamp": "2025-06-04T02:16:44Z",
+    "type": "config_param",
+    "key": "llm_api_base_url",
+    "value": "https://api.openai.com/v1",
+    "description": "Base URL for LLM API endpoints"
+  },
+  {
+    "id": "config_max_message_length",
+    "timestamp": "2025-06-04T02:16:49Z",
+    "type": "config_param",
+    "key": "max_message_length",
+    "value": 1000,
+    "description": "Maximum allowed message length in characters"
+  },
+  {
+    "id": "config_request_timeout_ms",
+    "timestamp": "2025-06-04T02:16:54Z",
+    "type": "config_param",
+    "key": "request_timeout_ms",
+    "value": 30000,
+    "description": "HTTP request timeout in milliseconds"
+  },
+  {
+    "id": "config_ui_animation_duration",
+    "timestamp": "2025-06-04T02:16:59Z",
+    "type": "config_param",
+    "key": "ui_animation_duration",
+    "value": 300,
+    "description": "Default UI animation duration in milliseconds"
+  },
+  {
+    "id": "config_enable_haptic_feedback",
+    "timestamp": "2025-06-04T02:17:04Z",
+    "type": "config_param",
+    "key": "enable_haptic_feedback",
+    "value": true,
+    "description": "Enable haptic feedback for supported devices"
+  },
+  {
+    "id": "config_enable_sound_effects",
+    "timestamp": "2025-06-04T02:17:09Z",
+    "type": "config_param",
+    "key": "enable_sound_effects",
+    "value": true,
+    "description": "Enable sound effects for UI interactions"
+  },
+  {
+    "id": "config_debug_mode",
+    "timestamp": "2025-06-04T02:17:14Z",
+    "type": "config_param",
+    "key": "debug_mode",
+    "value": false,
+    "description": "Enable debug mode with verbose logging"
+  },
+  {
+    "id": "config_audit_retention_days",
+    "timestamp": "2025-06-04T02:17:19Z",
+    "type": "config_param",
+    "key": "audit_retention_days",
+    "value": 30,
+    "description": "Number of days to retain audit logs"
+  },
+  {
+    "id": "config_server_port",
+    "timestamp": "2025-06-04T02:17:24Z",
+    "type": "config_param",
+    "key": "server_port",
+    "value": 8080,
+    "description": "Default server port for local development"
+  },
+  {
+    "id": "config_websocket_endpoint",
+    "timestamp": "2025-06-04T02:17:29Z",
+    "type": "config_param",
+    "key": "websocket_endpoint",
+    "value": "ws://localhost:8080/ws",
+    "description": "WebSocket endpoint for real-time communication"
+  },
+  {
+    "id": "config_static_assets_path",
+    "timestamp": "2025-06-04T02:17:34Z",
+    "type": "config_param",
+    "key": "static_assets_path",
+    "value": "/public",
+    "description": "Path to static assets (sounds, images, etc.)"
+  }
+]

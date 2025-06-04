@@ -1,0 +1,91 @@
+[
+  {
+    "id": "ui_error_handler_engine_def",
+    "timestamp": "2025-06-04T02:15:59Z",
+    "type": "engine_definition",
+    "name": "UI Error Handler Engine",
+    "description": "Defines rules for handling UI errors and displaying user-friendly feedback.",
+    "version": "1.0.0-loglineos"
+  },
+
+  {
+    "id": "rule_ui_notification",
+    "timestamp": "2025-06-04T02:16:04Z",
+    "type": "execution_rule",
+    "description": "Displays a transient notification message on the UI.",
+    "match": {
+      "type": "ui_notification"
+    },
+    "kernel_action": {
+      "action_type": "invoke_native_ui_notification",
+      "level_template": "{{span.level}}",
+      "content_template": "{{span.content_template}}",
+      "duration_ms_template": "{{span.duration_ms | default(5000)}}"
+    },
+    "audit_event_type": "ui_notification_event"
+  },
+
+  {
+    "id": "rule_ui_error_overlay",
+    "timestamp": "2025-06-04T02:16:09Z",
+    "type": "execution_rule",
+    "description": "Displays a critical full-screen error overlay.",
+    "match": {
+      "type": "ui_error_overlay"
+    },
+    "kernel_action": {
+      "action_type": "invoke_native_ui_error_overlay",
+      "message_template": "{{span.message}}",
+      "details_template": "{{span.details}}"
+    },
+    "audit_event_type": "ui_error_overlay_display"
+  },
+
+  {
+    "id": "rule_kernel_error_handler",
+    "timestamp": "2025-06-04T02:16:14Z",
+    "type": "execution_rule",
+    "description": "Global error handler for the Kernel, displays critical errors.",
+    "match": {
+      "type": "kernel_error_event"
+    },
+    "kernel_action": {
+      "action_type": "execute_logline_effects_list",
+      "effects_list_template": [
+        {
+          "type": "ui_error_overlay",
+          "message": "Erro inesperado do sistema: {{span.error.message}}",
+          "details": "{{span.error.stack}}"
+        },
+        {
+          "type": "audit_log",
+          "level": "critical",
+          "message": "Global Kernel Error: {{span.error.message}}",
+          "context": { "stack": "{{span.error.stack}}" }
+        }
+      ],
+      "context_template": {}
+    },
+    "audit_event_type": "kernel_error_handled"
+  },
+
+  {
+    "id": "rule_ui_render_from_ast",
+    "timestamp": "2025-06-04T02:16:19Z",
+    "type": "execution_rule",
+    "description": "Renders UI from a parsed LogLine AST into the DOM.",
+    "match": {
+      "type": "ui_render_from_ast"
+    },
+    "kernel_action": {
+      "action_type": "invoke_native_ui_render_from_ast",
+      "ast_template": "{{span.ast_template}}",
+      "target_selector_template": "{{span.target_selector}}"
+    },
+    "output_mapping": {
+      "render_status": "ui_render.status",
+      "components_rendered": "ui_render.components_count"
+    },
+    "audit_event_type": "ui_render_from_ast_execution"
+  }
+]

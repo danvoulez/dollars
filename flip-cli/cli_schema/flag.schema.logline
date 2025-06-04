@@ -1,0 +1,27 @@
+# cli_schema/flag.schema.logline
+# Schema para validação de cada flag
+
+- type: schema
+  name: "FlagSchema"
+  properties:
+    name:
+      type: "string"
+      pattern: "^[a-z][a-z0-9_-]*$"
+      required: true
+    short:
+      type: "string"
+      pattern: "^[a-z]$"
+      required: false
+    type:
+      type: "string"
+      enum: ["string", "number", "boolean"]
+      required: true
+    default:
+      type: "string"
+      required: false
+    description:
+      type: "string"
+      required: true
+    required:
+      type: "boolean"
+      default: false

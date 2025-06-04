@@ -1,0 +1,9 @@
+contract prepare_feedback_data {
+  output { data: array }
+  effect {
+    output.data = state.training_samples.map(s => ({
+      input: s,
+      context: get_message_context(s.message_id)
+    }))
+  }
+}

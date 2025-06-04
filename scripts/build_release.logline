@@ -1,0 +1,131 @@
+[
+  {
+    "id": "build_release_pipeline",
+    "timestamp": "2025-06-04T02:22:35Z",
+    "type": "build_pipeline",
+    "name": "FlipApp LogLineOS Release Builder",
+    "description": "Automated build pipeline for cross-platform binaries",
+    "version": "1.0.0-loglineos"
+  },
+
+  {
+    "id": "contract_build_all_platforms",
+    "timestamp": "2025-06-04T02:22:40Z",
+    "type": "contract_definition",
+    "name": "build_all_platforms",
+    "version": "1.0.0-loglineos",
+    "description": "Builds flip binary for all supported platforms",
+    "created_by": "LogLineOS Build System",
+    "args_schema": {
+      "version": { "type": "string", "required": true },
+      "output_dir": { "type": "string", "default": "dist" }
+    },
+    "effects": [
+      {
+        "type": "audit_log",
+        "level": "info",
+        "message": "🔨 Starting cross-platform build for version {{args.version}}"
+      },
+      {
+        "type": "kernel_action",
+        "action_type": "create_directory",
+        "path_template": "{{args.output_dir}}"
+      },
+      {
+        "type": "loop",
+        "data_source": [
+          { "os": "linux", "arch": "amd64" },
+          { "os": "linux", "arch": "arm64" },
+          { "os": "darwin", "arch": "amd64" },
+          { "os": "darwin", "arch": "arm64" },
+          { "os": "windows", "arch": "amd64" },
+          { "os": "js", "arch": "wasm" }
+        ],
+        "children_effects": [
+          {
+            "type": "contract_call",
+            "contract_name": "build_platform_binary",
+            "args": {
+              "os": "{{item.os}}",
+              "arch": "{{item.arch}}",
+              "version": "{{args.version}}",
+              "output_dir": "{{args.output_dir}}"
+            }
+          }
+        ]
+      },
+      {
+        "type": "contract_call",
+        "contract_name": "generate_checksums",
+        "args": { "output_dir": "{{args.output_dir}}" }
+      }
+    ]
+  },
+
+  {
+    "id": "contract_build_platform_binary",
+    "timestamp": "2025-06-04T02:22:45Z",
+    "type": "contract_definition",
+    "name": "build_platform_binary",
+    "version": "1.0.0-loglineos",
+    "description": "Builds binary for a specific platform",
+    "created_by": "LogLineOS Build System",
+    "args_schema": {
+      "os": { "type": "string", "required": true },
+      "arch": { "type": "string", "required": true },
+      "version": { "type": "string", "required": true },
+      "output_dir": { "type": "string", "required": true }
+    },
+    "effects": [
+      {
+        "type": "audit_log",
+        "level": "info",
+        "message": "Building for {{args.os}}/{{args.arch}}"
+      },
+      {
+        "type": "kernel_action",
+        "action_type": "execute_shell_command",
+        "command_template": "GOOS={{args.os}} GOARCH={{args.arch}} go build -ldflags \"-X main.version={{args.version}}\" -o {{args.output_dir}}/flip-{{args.os}}-{{args.arch}}{{args.os == 'windows' ? '.exe' : ''}} ./cmd/flip",
+        "working_directory": ".",
+        "timeout_seconds": 300
+      },
+      {
+        "type": "audit_log",
+        "level": "info",
+        "message": "✅ Build completed for {{args.os}}/{{args.arch}}"
+      }
+    ]
+  },
+
+  {
+    "id": "contract_generate_checksums",
+    "timestamp": "2025-06-04T02:22:50Z",
+    "type": "contract_definition",
+    "name": "generate_checksums",
+    "version": "1.0.0-loglineos",
+    "description": "Generates SHA256 checksums for all binaries",
+    "created_by": "LogLineOS Build System",
+    "args_schema": {
+      "output_dir": { "type": "string", "required": true }
+    },
+    "effects": [
+      {
+        "type": "audit_log",
+        "level": "info",
+        "message": "🔐 Generating SHA256 checksums"
+      },
+      {
+        "type": "kernel_action",
+        "action_type": "execute_shell_command",
+        "command_template": "cd {{args.output_dir}} && sha256sum flip-* > checksums.txt",
+        "working_directory": ".",
+        "timeout_seconds": 60
+      },
+      {
+        "type": "audit_log",
+        "level": "info",
+        "message": "✅ Checksums generated in {{args.output_dir}}/checksums.txt"
+      }
+    ]
+  }
+]

@@ -1,0 +1,107 @@
+[
+  {
+    "id": "simulation_engine_def",
+    "timestamp": "2025-06-04T02:17:20Z",
+    "type": "engine_definition",
+    "name": "Simulation Mode Engine",
+    "description": "Enables dry-run and simulation modes for LogLineOS operations",
+    "version": "1.0.0-loglineos"
+  },
+
+  {
+    "id": "rule_simulate_contract_call",
+    "timestamp": "2025-06-04T02:17:25Z",
+    "type": "execution_rule",
+    "description": "Simulates contract execution without side effects",
+    "match": {
+      "type": "simulate_contract_call"
+    },
+    "kernel_action": {
+      "action_type": "invoke_native_contract_simulation",
+      "contract_name_template": "{{span.contract_name}}",
+      "args_template": "{{span.args}}",
+      "simulation_level_template": "{{span.simulation_level | default('full')}}"
+    },
+    "output_mapping": {
+      "would_execute": "simulation.would_execute",
+      "predicted_effects": "simulation.predicted_effects",
+      "validation_result": "simulation.validation_result"
+    },
+    "audit_event_type": "contract_simulation"
+  },
+
+  {
+    "id": "rule_dry_run_state_mutation",
+    "timestamp": "2025-06-04T02:17:30Z",
+    "type": "execution_rule",
+    "description": "Previews state mutations without applying them",
+    "match": {
+      "type": "dry_run_state_mutation"
+    },
+    "kernel_action": {
+      "action_type": "invoke_native_state_mutation_preview",
+      "path_template": "{{span.path}}",
+      "value_template": "{{span.value}}",
+      "operation_template": "{{span.operation | default('set')}}"
+    },
+    "output_mapping": {
+      "current_value": "preview.current_value",
+      "new_value": "preview.new_value",
+      "would_change": "preview.would_change"
+    },
+    "audit_event_type": "state_mutation_preview"
+  },
+
+  {
+    "id": "contract_enable_simulation_mode",
+    "timestamp": "2025-06-04T02:17:35Z",
+    "type": "contract_definition",
+    "name": "enable_simulation_mode",
+    "version": "1.0.0-loglineos",
+    "description": "Enables global simulation mode for the LogLineOS instance",
+    "created_by": "LogLineOS Kernel",
+    "args_schema": {
+      "simulation_level": { "type": "string", "enum": ["preview", "full", "off"], "default": "full" }
+    },
+    "effects": [
+      {
+        "type": "state_mutation",
+        "path": "system.simulation_mode.enabled",
+        "value": true
+      },
+      {
+        "type": "state_mutation",
+        "path": "system.simulation_mode.level",
+        "value": "{{args.simulation_level}}"
+      },
+      {
+        "type": "audit_log",
+        "level": "info",
+        "message": "Simulation mode enabled with level: {{args.simulation_level}}"
+      }
+    ]
+  },
+
+  {
+    "id": "contract_disable_simulation_mode",
+    "timestamp": "2025-06-04T02:17:40Z",
+    "type": "contract_definition",
+    "name": "disable_simulation_mode",
+    "version": "1.0.0-loglineos",
+    "description": "Disables simulation mode and returns to normal execution",
+    "created_by": "LogLineOS Kernel",
+    "args_schema": {},
+    "effects": [
+      {
+        "type": "state_mutation",
+        "path": "system.simulation_mode.enabled",
+        "value": false
+      },
+      {
+        "type": "audit_log",
+        "level": "info",
+        "message": "Simulation mode disabled - returning to normal execution"
+      }
+    ]
+  }
+]

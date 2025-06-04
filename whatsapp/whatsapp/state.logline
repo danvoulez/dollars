@@ -1,0 +1,16 @@
+state {
+  ghost_sales: map<conversation_id, ghost_sale> = {}
+  affairs: []affair = []
+  judgements: []judgement = []
+  agent_interventions: []intervention = []
+  system_load: []load_metric = []
+  message_counter: int = 0
+  agents: map<agent_id, agent> = {
+    "default": { penalty_score: 0, status: "active" }
+  }
+  config: {
+    llm_model: "local/gemma-2b",
+    max_conversations: 10,
+    daily_msg_limit: 150
+  }
+}

@@ -1,0 +1,12 @@
+contract detect_language {
+  input { text: string }
+  output { language: string, confidence: float }
+  effect {
+    output = builtin_lang_detect(input.text) 
+      ?: llm_call(
+          model: state.config.llm_model,
+          prompt: "DETECT_LANG:{{input.text}}",
+          format: "json"
+        )
+  }
+}

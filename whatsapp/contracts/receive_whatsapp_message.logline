@@ -1,0 +1,29 @@
+contract:
+  name: "receive_whatsapp_message"
+  args:
+    conversation_id: string
+    sender: string
+    content: string
+    timestamp: string
+    media_url: optional string
+  effects:
+    - type: "state_append"
+      path: "messages.{{args.conversation_id}}"
+      value:
+        id: "{{generate_uuid}}"
+        conversation_id: "{{args.conversation_id}}"
+        sender: "{{args.sender}}"
+        content: "{{args.content}}"
+        media_url: "{{args.media_url}}"
+        timestamp: "{{args.timestamp}}"
+        status: "unread"
+    - type: "haptic"
+      pattern: "short"
+    - when:
+        condition: "{{state.active_conversation != args.conversation_id}}"
+        effects:
+          - type: "state_mutation"
+            path: "conversations[{{args.conversation_id}}].unread"
+            value: "{{state.conversations[args.conversation_id].unread + 1}}"
+    - type: "audit_log_info"
+      message: "📥 Message received from {{args.sender}} in conversation {{args.conversation_id}}"

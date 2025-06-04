@@ -1,0 +1,76 @@
+# flip_hardening.logline
+# Span com todo o plano de refatoração e hardening do FlipApp LogLineOS
+- type: refactor_task
+  id: "task_fallback_llm_local"
+  description: "Implementar fallback local no llm_proxy com modelo WASM ou resposta default"
+  status: "pending"
+
+- type: refactor_task
+  id: "task_cache_semantic"
+  description: "Adicionar cache semântico local por hash de prompt no llm_proxy"
+  status: "pending"
+
+- type: refactor_task
+  id: "task_llm_timeout_retry"
+  description: "Adicionar timeout, retry e captura de exceções no llm_proxy_hard"
+  status: "pending"
+
+- type: refactor_task
+  id: "task_logger_integration"
+  description: "Remover utils/logger.js ou integrar com audit.logline"
+  status: "pending"
+
+- type: refactor_task
+  id: "task_add_tests_logline"
+  description: "Adicionar testes .logline para expect_state, expect_effect e expect_error em contratos e regras"
+  status: "pending"
+
+- type: refactor_task
+  id: "task_contract_versioning"
+  description: "Adicionar version, description e created_by em todos os contratos, com validação de tipos"
+  status: "pending"
+
+- type: refactor_task
+  id: "task_ui_schema_validation"
+  description: "Criar schemas para UI e validar na carga de arquivos .logline, adicionar fallback visual"
+  status: "pending"
+
+- type: refactor_task
+  id: "task_rotate_logs_archive"
+  description: "Adicionar contratos rotate_logs, archive_spans e expire_state, configurar via cron local"
+  status: "pending"
+
+- type: refactor_task
+  id: "task_add_cli_flip"
+  description: "Criar binário 'flip' com comandos run, logs, audit e test"
+  status: "pending"
+
+- type: refactor_task
+  id: "task_consolidate_config"
+  description: "Consolidar configuração em config.logline e gerar load_env.sh, remover env-config.sh"
+  status: "pending"
+
+- type: refactor_task
+  id: "task_remove_docker"
+  description: "Remover Dockerfile, docker-compose.yml e pasta docker/, atualizar README.md"
+  status: "pending"
+
+- type: refactor_task
+  id: "task_span_validation"
+  description: "Adicionar span_validator.logline com validação sintática e contratos de fallback para spans inválidos"
+  status: "pending"
+
+- type: refactor_task
+  id: "task_llm_isolation"
+  description: "Adicionar origin, context_id ou user_id em llm_request.logline para rastreabilidade"
+  status: "pending"
+
+- type: refactor_task
+  id: "task_contract_audit"
+  description: "Adicionar audit_contract_change.logline para registro de alterações de contrato e changelog simbólico"
+  status: "pending"
+
+- type: refactor_task
+  id: "task_simulation_mode"
+  description: "Implementar modo 'simulate' em LogLine para spans sem efeitos colaterais"
+  status: "pending"

@@ -1,0 +1,34 @@
+contract:
+  name: "send_whatsapp_message"
+  args:
+    conversation_id: string
+  effects:
+    - type: "http_request"
+      method: "POST"
+      url: "/api/send_whatsapp"
+      body:
+        conversation_id: "{{args.conversation_id}}"
+        sender: "{{state.user_id}}"
+        content: "{{state.input_message}}"
+        timestamp: "{{timestamp_now}}"
+      on_success:
+        - type: "state_append"
+          path: "messages.{{args.conversation_id}}"
+          value:
+            id: "{{generate_uuid}}"
+            conversation_id: "{{args.conversation_id}}"
+            sender: "{{state.user_id}}"
+            content: "{{state.input_message}}"
+            timestamp: "{{timestamp_now}}"
+            status: "sent"
+        - type: "state_mutation"
+          path: "state.input_message"
+          value: ""
+      on_failure:
+        - type: "state_mutation"
+          path: "state.error"
+          value: "Failed to send message"
+        - type: "haptic"
+          pattern: "long"
+    - type: "audit_log_info"
+      message: "📤 Message sent to conversation {{args.conversation_id}} by {{state.user_id}}"

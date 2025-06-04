@@ -1,0 +1,239 @@
+[
+  {
+    "id": "simulation_engine_def",
+    "timestamp": "2025-06-04T02:21:30Z",
+    "type": "engine_definition",
+    "name": "Simulation Engine",
+    "description": "Defines rules for running LogLineOS in dry-run mode.",
+    "version": "1.0.0-loglineos"
+  },
+
+  {
+    "id": "contract_noop_effect",
+    "timestamp": "2025-06-04T02:21:35Z",
+    "type": "contract_definition",
+    "name": "noop_effect",
+    "version": "1.0.0-loglineos",
+    "description": "A no-operation effect. Used to nullify real actions in simulation mode.",
+    "created_by": "LogLineOS Kernel",
+    "args_schema": {
+      "original_action_type": { "type": "string", "required": true },
+      "original_span_data": { "type": "object", "required": false }
+    },
+    "effects": [
+      {
+        "type": "audit_log",
+        "level": "debug",
+        "message": "(SIMULATED) Original action {{args.original_action_type}} was skipped.",
+        "context": { 
+          "simulation_mode": true,
+          "original_span": "{{args.original_span_data}}"
+        }
+      }
+    ]
+  },
+
+  {
+    "id": "rule_intercept_simulated_state_mutation",
+    "timestamp": "2025-06-04T02:21:40Z",
+    "type": "execution_rule",
+    "description": "Intercepts state mutations when simulation mode is active.",
+    "priority": 1000,
+    "match": {
+      "type": "state_mutation",
+      "when_expression": "state.execution.simulate_mode === true"
+    },
+    "kernel_action": {
+      "action_type": "execute_logline_effects_list",
+      "effects_list_template": [
+        {
+          "type": "contract_call",
+          "contract_name": "noop_effect",
+          "args": { 
+            "original_action_type": "state_mutation",
+            "original_span_data": {
+              "path": "{{span.path}}",
+              "value": "{{span.value}}",
+              "operation": "{{span.operation | default('set')}}"
+            }
+          }
+        },
+        {
+          "type": "audit_log",
+          "level": "info",
+          "message": "(SIMULATED) State mutation: {{span.path}} = {{span.value}}",
+          "context": { "simulation_preview": true }
+        }
+      ],
+      "context_template": {}
+    },
+    "stop_execution": true,
+    "audit_event_type": "simulated_state_mutation"
+  },
+
+  {
+    "id": "rule_intercept_simulated_http_request",
+    "timestamp": "2025-06-04T02:21:45Z",
+    "type": "execution_rule",
+    "description": "Intercepts HTTP requests when simulation mode is active.",
+    "priority": 1000,
+    "match": {
+      "type": "http_request",
+      "when_expression": "state.execution.simulate_mode === true"
+    },
+    "kernel_action": {
+      "action_type": "execute_logline_effects_list",
+      "effects_list_template": [
+        {
+          "type": "contract_call",
+          "contract_name": "noop_effect",
+          "args": { 
+            "original_action_type": "http_request",
+            "original_span_data": {
+              "method": "{{span.method}}",
+              "url": "{{span.url_template}}",
+              "headers": "{{span.headers}}"
+            }
+          }
+        },
+        {
+          "type": "audit_log",
+          "level": "info",
+          "message": "(SIMULATED) HTTP {{span.method}} request to: {{span.url_template}}",
+          "context": { "simulation_preview": true }
+        }
+      ],
+      "context_template": {}
+    },
+    "stop_execution": true,
+    "audit_event_type": "simulated_http_request"
+  },
+
+  {
+    "id": "rule_intercept_simulated_ui_actions",
+    "timestamp": "2025-06-04T02:21:50Z",
+    "type": "execution_rule",
+    "description": "Intercepts UI actions when simulation mode is active.",
+    "priority": 1000,
+    "match": {
+      "type_pattern": "ui_*",
+      "when_expression": "state.execution.simulate_mode === true"
+    },
+    "kernel_action": {
+      "action_type": "execute_logline_effects_list",
+      "effects_list_template": [
+        {
+          "type": "contract_call",
+          "contract_name": "noop_effect",
+          "args": { 
+            "original_action_type": "{{span.type}}",
+            "original_span_data": "{{span}}"
+          }
+        },
+        {
+          "type": "audit_log",
+          "level": "info",
+          "message": "(SIMULATED) UI action: {{span.type}}",
+          "context": { "simulation_preview": true }
+        }
+      ],
+      "context_template": {}
+    },
+    "stop_execution": true,
+    "audit_event_type": "simulated_ui_action"
+  },
+
+  {
+    "id": "contract_enable_simulation_mode",
+    "timestamp": "2025-06-04T02:21:55Z",
+    "type": "contract_definition",
+    "name": "enable_simulation_mode",
+    "version": "1.0.0-loglineos",
+    "description": "Enables global simulation mode for the LogLineOS instance.",
+    "created_by": "LogLineOS Kernel",
+    "args_schema": {
+      "simulation_level": { "type": "string", "enum": ["basic", "full", "verbose"], "default": "full" }
+    },
+    "effects": [
+      {
+        "type": "state_mutation",
+        "path": "execution.simulate_mode",
+        "value": true
+      },
+      {
+        "type": "state_mutation",
+        "path": "execution.simulation_level",
+        "value": "{{args.simulation_level}}"
+      },
+      {
+        "type": "state_mutation",
+        "path": "execution.simulation_start_time",
+        "value": "{{get_timestamp()}}"
+      },
+      {
+        "type": "audit_log",
+        "level": "warn",
+        "message": "🔍 SIMULATION MODE ENABLED - Level: {{args.simulation_level}}",
+        "context": { "simulation_activated": true }
+      }
+    ]
+  },
+
+  {
+    "id": "contract_disable_simulation_mode",
+    "timestamp": "2025-06-04T02:22:00Z",
+    "type": "contract_definition",
+    "name": "disable_simulation_mode",
+    "version": "1.0.0-loglineos",
+    "description": "Disables simulation mode and returns to normal execution.",
+    "created_by": "LogLineOS Kernel",
+    "args_schema": {},
+    "effects": [
+      {
+        "type": "state_mutation",
+        "path": "execution.simulate_mode",
+        "value": false
+      },
+      {
+        "type": "state_mutation",
+        "path": "execution.simulation_end_time",
+        "value": "{{get_timestamp()}}"
+      },
+      {
+        "type": "audit_log",
+        "level": "info",
+        "message": "✅ Simulation mode disabled - returning to normal execution",
+        "context": { 
+          "simulation_deactivated": true,
+          "duration": "{{state.execution.simulation_end_time - state.execution.simulation_start_time}}"
+        }
+      }
+    ]
+  },
+
+  {
+    "id": "contract_simulation_summary",
+    "timestamp": "2025-06-04T02:22:05Z",
+    "type": "contract_definition",
+    "name": "simulation_summary",
+    "version": "1.0.0-loglineos",
+    "description": "Generates a summary report of actions that would have been executed in simulation mode.",
+    "created_by": "LogLineOS Kernel",
+    "args_schema": {},
+    "effects": [
+      {
+        "type": "kernel_action",
+        "action_type": "generate_simulation_report",
+        "filter_audit_events": ["simulated_state_mutation", "simulated_http_request", "simulated_ui_action"],
+        "since_timestamp": "{{state.execution.simulation_start_time}}",
+        "response_path": "temp.simulation_report"
+      },
+      {
+        "type": "audit_log",
+        "level": "info",
+        "message": "📊 Simulation Summary Generated",
+        "context": "{{temp.simulation_report}}"
+      }
+    ]
+  }
+]

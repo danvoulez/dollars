@@ -1,0 +1,11 @@
+contract:
+  name: "load_chat_history_success"
+  args:
+    conversation_id: string
+    messages: list
+  effects:
+    - type: "state_merge"
+      path: "messages.{{args.conversation_id}}"
+      value: "{{args.messages}}"
+    - type: "audit_log_info"
+      message: "Loaded {{args.messages.length}} messages for conversation {{args.conversation_id}}"

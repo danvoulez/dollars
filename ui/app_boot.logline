@@ -1,0 +1,75 @@
+[
+  {
+    "id": "contract_load_main_ui",
+    "timestamp": "2025-06-04T02:15:34Z",
+    "type": "contract_definition",
+    "name": "load_main_ui",
+    "version": "1.0.0-loglineos",
+    "description": "Loads and renders the main UI for the application.",
+    "created_by": "LogLineOS Kernel",
+    "args_schema": {},
+    "effects": [
+      {
+        "id": "effect_show_loading_skeleton",
+        "type": "ui_display_skeleton",
+        "selector": "#app_root",
+        "skeleton_type": "full_screen_app_layout"
+      },
+      {
+        "id": "effect_fetch_main_ui_logline",
+        "type": "http_request",
+        "method": "GET",
+        "url_template": "{{state.config.app_entry_point}}",
+        "response_path": "temp.main_ui_logline_source",
+        "error_next_span_id": "handle_ui_load_error"
+      },
+      {
+        "id": "effect_parse_main_ui_logline",
+        "type": "kernel_action",
+        "action_type": "parse_logline_source",
+        "source_template": "{{temp.main_ui_logline_source.body}}",
+        "response_path": "temp.main_ui_ast",
+        "error_next_span_id": "handle_ui_parse_error"
+      },
+      {
+        "id": "effect_render_main_ui",
+        "type": "ui_render_from_ast",
+        "ast_template": "{{temp.main_ui_ast}}",
+        "target_selector": "#app_root"
+      },
+      {
+        "id": "effect_hide_loading_skeleton",
+        "type": "ui_hide_skeleton",
+        "selector": "#app_root"
+      },
+      {
+        "type": "audit_log", "level": "info", "message": "Main UI loaded and rendered."
+      }
+    ]
+  },
+  {
+    "id": "rule_ui_display_skeleton",
+    "timestamp": "2025-06-04T02:15:39Z",
+    "type": "execution_rule",
+    "description": "Displays a skeleton loading screen on the UI.",
+    "match": { "type": "ui_display_skeleton" },
+    "kernel_action": {
+      "action_type": "invoke_native_ui_display_skeleton",
+      "selector_template": "{{span.selector}}",
+      "skeleton_type_template": "{{span.skeleton_type}}"
+    },
+    "audit_event_type": "ui_display_skeleton_event"
+  },
+  {
+    "id": "rule_ui_hide_skeleton",
+    "timestamp": "2025-06-04T02:15:44Z",
+    "type": "execution_rule",
+    "description": "Hides a skeleton loading screen.",
+    "match": { "type": "ui_hide_skeleton" },
+    "kernel_action": {
+      "action_type": "invoke_native_ui_hide_skeleton",
+      "selector_template": "{{span.selector}}"
+    },
+    "audit_event_type": "ui_hide_skeleton_event"
+  }
+]

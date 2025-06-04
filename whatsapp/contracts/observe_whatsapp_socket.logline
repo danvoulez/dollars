@@ -1,0 +1,24 @@
+contract:
+  name: "observe_whatsapp_socket"
+  args:
+    url: string
+  effects:
+    - type: "websocket_listen"
+      url: "{{args.url}}"
+      on_message:
+        contract: "receive_whatsapp_message"
+        args_mapping:
+          conversation_id: "payload.conversation_id"
+          sender: "payload.sender"
+          content: "payload.content"
+          timestamp: "payload.timestamp"
+          media_url: "payload.media_url"
+      on_error:
+        - type: "state_mutation"
+          path: "state.error"
+          value: "WebSocket connection failed"
+        - type: "audit_log_error"
+          message: "WebSocket error: {{error}}"
+      on_reconnect:
+        - type: "audit_log_info"
+          message: "WebSocket reconnected"

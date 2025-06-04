@@ -1,0 +1,16 @@
+contract raise_alert {
+  input { message: string, level: int }
+  effect {
+    if input.level >= 8 {
+      state.alerts.push({
+        timestamp: now(),
+        message: input.message,
+        level: input.level
+      })
+      call agent_intervene(
+        conversation_id: current_conversation(),
+        context: last_messages(5)
+      )
+    }
+  }
+}

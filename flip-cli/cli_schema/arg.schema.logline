@@ -1,0 +1,20 @@
+# cli_schema/arg.schema.logline
+# Schema para validação de argumentos posicionais
+
+- type: schema
+  name: "ArgSchema"
+  properties:
+    name:
+      type: "string"
+      pattern: "^[a-z][a-z0-9_-]*$"
+      required: true
+    type:
+      type: "string"
+      enum: ["string", "number"]
+      required: true
+    description:
+      type: "string"
+      required: true
+    required:
+      type: "boolean"
+      default: true

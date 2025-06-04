@@ -1,0 +1,13 @@
+# llm_response_contract.logline
+# Contrato que processa llm_response e aplica resultado ao estado
+
+- type: contract
+  name: apply_completion_result
+  args:
+    text: "string"
+  effects:
+    - type: state_mutation
+      path: "state.completion_output"
+      value: "{{args.text}}"
+    - type: audit_log_info
+      message: "LLM completou com entrada: {{args.text | slice(0,20)}}"

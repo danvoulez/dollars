@@ -1,0 +1,178 @@
+[
+  {
+    "id": "contract_run_tests",
+    "timestamp": "2025-06-04T02:14:19Z",
+    "type": "contract_definition",
+    "name": "run_tests",
+    "version": "1.0.0-loglineos",
+    "description": "Executes a suite of LogLine tests.",
+    "created_by": "LogLineOS Kernel",
+    "args_schema": {
+      "suite_paths": { "type": "array", "items": { "type": "string" }, "required": true }
+    },
+    "effects": [
+      { "type": "audit_log", "level": "info", "message": "Starting test execution for {{args.suite_paths}}." },
+      { "type": "state_mutation", "path": "test_results.current_suite", "value": "" },
+      { "type": "state_mutation", "path": "test_results.total_tests", "value": 0 },
+      { "type": "state_mutation", "path": "test_results.passed_tests", "value": 0 },
+      { "type": "state_mutation", "path": "test_results.failed_tests", "value": 0 },
+      { "type": "state_mutation", "path": "test_results.errors", "value": [] },
+      
+      {
+        "type": "loop",
+        "data_source": "args.suite_paths",
+        "children_effects": [
+          {
+            "type": "contract_call",
+            "contract_name": "execute_test_suite",
+            "args": { "suite_path": "{{item}}" }
+          }
+        ]
+      },
+      
+      { "type": "audit_log", "level": "info", "message": "All tests completed." }
+    ]
+  },
+  
+  {
+    "id": "contract_execute_test_suite",
+    "timestamp": "2025-06-04T02:14:24Z",
+    "type": "contract_definition",
+    "name": "execute_test_suite",
+    "version": "1.0.0-loglineos",
+    "description": "Loads and executes a single test suite file.",
+    "created_by": "LogLineOS Kernel",
+    "args_schema": {
+      "suite_path": { "type": "string", "required": true }
+    },
+    "effects": [
+      { "type": "audit_log", "level": "info", "message": "Loading test suite from {{args.suite_path}}." },
+      {
+        "type": "file_read",
+        "path": "{{args.suite_path}}",
+        "response_path": "temp.raw_suite_content"
+      },
+      {
+        "type": "kernel_action",
+        "action_type": "parse_logline_source",
+        "source_template": "{{temp.raw_suite_content}}",
+        "response_path": "temp.suite_ast"
+      },
+      {
+        "type": "state_mutation",
+        "path": "test_results.current_suite",
+        "value": "{{temp.suite_ast.blocks[0].name}}"
+      },
+      {
+        "type": "loop",
+        "data_source": "temp.suite_ast.blocks[0].tests",
+        "children_effects": [
+          {
+            "type": "contract_call",
+            "contract_name": "execute_test_case",
+            "args": { "test_case": "{{item}}" }
+          }
+        ]
+      }
+    ]
+  },
+  
+  {
+    "id": "contract_execute_test_case",
+    "timestamp": "2025-06-04T02:14:29Z",
+    "type": "contract_definition",
+    "name": "execute_test_case",
+    "version": "1.0.0-loglineos",
+    "description": "Executes a single test case within a suite.",
+    "created_by": "LogLineOS Kernel",
+    "args_schema": {
+      "test_case": { "type": "object", "required": true }
+    },
+    "effects": [
+      { "type": "audit_log", "level": "info", "message": "Executing test case: {{args.test_case.name}}" },
+      { "type": "state_mutation", "path": "test_results.total_tests", "increment": 1 },
+      
+      {
+        "type": "execute_logline_effects_list",
+        "effects_list_template": "{{args.test_case.setup_effects}}",
+        "context_template": {}
+      },
+      
+      {
+        "type": "contract_call",
+        "contract_name": "{{args.test_case.execute_contract.contract_name}}",
+        "args": "{{args.test_case.execute_contract.args}}",
+        "context": "{{args.test_case.execute_contract.context}}",
+        "error_next_span_id": "test_case_error_handler"
+      },
+      
+      {
+        "type": "loop",
+        "data_source": "args.test_case.assertions",
+        "children_effects": [
+          {
+            "type": "contract_call",
+            "contract_name": "execute_assertion",
+            "args": { "assertion": "{{item}}" },
+            "on_failure_contract": "test_assertion_failed_handler"
+          }
+        ]
+      },
+      
+      { "type": "state_mutation", "path": "test_results.passed_tests", "increment": 1 },
+      { "type": "audit_log", "level": "info", "message": "Test case PASS: {{args.test_case.name}}" }
+    ],
+    "onError": [
+      {
+        "type": "audit_log",
+        "level": "error",
+        "message": "Test case FAILED: {{args.test_case.name}} - {{error.message}}",
+        "context_template": "{{error}}"
+      },
+      { "type": "state_mutation", "path": "test_results.failed_tests", "increment": 1 },
+      { "type": "append_to_array", "path": "test_results.errors", "value": { "test_id": "{{args.test_case.id}}", "error_message": "{{error.message}}" } }
+    ]
+  },
+  
+  {
+    "id": "contract_execute_assertion",
+    "timestamp": "2025-06-04T02:14:34Z",
+    "type": "contract_definition",
+    "name": "execute_assertion",
+    "version": "1.0.0-loglineos",
+    "description": "Executes a single test assertion.",
+    "created_by": "LogLineOS Kernel",
+    "args_schema": {
+      "assertion": { "type": "object", "required": true }
+    },
+    "effects": [
+      {
+        "type": "switch",
+        "expression": "args.assertion.type",
+        "cases": [
+          {
+            "value": "assert_state",
+            "effects": [
+              { "type": "assert_state", "path": "{{args.assertion.path}}", "expected_value": "{{args.assertion.expected_value}}" }
+            ]
+          },
+          {
+            "value": "assert_span_emitted",
+            "effects": [
+              { "type": "assert_span_emitted", "span_type": "{{args.assertion.span_type}}", "match_criteria": "{{args.assertion.match_criteria}}" }
+            ]
+          },
+          {
+            "value": "assert_error_occurred",
+            "effects": [
+              { "type": "assert_error_occurred", "contract_name": "{{args.assertion.contract_name}}", "error_message_pattern": "{{args.assertion.error_message_pattern}}" }
+            ]
+          }
+        ],
+        "default_effects": [
+          { "type": "audit_log", "level": "error", "message": "Unknown assertion type: {{args.assertion.type}}" }
+        ]
+      }
+    ]
+  }
+]

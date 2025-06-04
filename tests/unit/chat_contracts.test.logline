@@ -1,0 +1,64 @@
+[
+  {
+    "id": "test_suite_chat_contracts",
+    "timestamp": "2025-06-04T02:13:54Z",
+    "type": "test_suite",
+    "name": "Chat Contracts Unit Tests",
+    "description": "Ensures chat-related contracts behave as expected.",
+    "tests": [
+      {
+        "id": "test_send_message_success",
+        "timestamp": "2025-06-04T02:13:59Z",
+        "type": "test_case",
+        "name": "send_message contract - success path",
+        "setup_effects": [
+          { "type": "state_mutation", "path": "chat.history.default", "value": [] },
+          { "type": "state_mutation", "path": "chat.message_input", "value": "Initial message." }
+        ],
+        "execute_contract": {
+          "contract_name": "send_message",
+          "args": {
+            "message": "Hello LogLineOS!",
+            "conversation_id": "default"
+          }
+        },
+        "assertions": [
+          { "type": "assert_state", "path": "chat.message_input", "expected_value": "" },
+          { "type": "assert_state", "path": "chat.is_typing", "expected_value": "true" },
+          {
+            "type": "assert_span_emitted",
+            "span_type": "audit_log",
+            "match_criteria": { "level": "info", "message_pattern": "Attempting to send message" }
+          },
+          {
+            "type": "assert_span_emitted",
+            "span_type": "state_mutation",
+            "match_criteria": { "path": "chat.history.default", "append_value.sender": "user", "append_value.content": "Hello LogLineOS!" }
+          },
+          {
+            "type": "assert_span_emitted",
+            "span_type": "llm_query",
+            "match_criteria": { "prompt_template": "Hello LogLineOS!", "on_response_contract_name_template": "process_llm_response" }
+          }
+        ]
+      },
+      {
+        "id": "test_send_message_empty_message_validation",
+        "timestamp": "2025-06-04T02:14:04Z",
+        "type": "test_case",
+        "name": "send_message contract - empty message validation",
+        "setup_effects": [
+          { "type": "state_mutation", "path": "chat.message_input", "value": "" }
+        ],
+        "execute_contract": {
+          "contract_name": "send_message",
+          "args": {
+            "message": "",
+            "conversation_id": "default"
+          }
+        },
+        "expect_error_message_pattern": "Mensagem não pode estar vazia"
+      }
+    ]
+  }
+]

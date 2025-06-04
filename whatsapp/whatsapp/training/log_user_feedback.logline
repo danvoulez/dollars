@@ -1,0 +1,11 @@
+contract log_user_feedback {
+  input { message_id: string, tag: string }
+  effect {
+    state.training_samples.push({
+      id: input.message_id,
+      tag: input.tag,
+      timestamp: now(),
+      conversation: current_context()
+    })
+  }
+}

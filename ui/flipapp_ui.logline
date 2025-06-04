@@ -1,0 +1,267 @@
+# flipapp_ui.logline
+# Interface principal do FlipApp com layout dual e navegação simbólica
+# Autor: Dan (LogLineOS)
+# Data: 2025-06-03
+
+- type: container
+  class: "flipapp-root"
+  token:
+    height: "100vh"
+    display: "flex"
+    flex-direction: "column"
+    background: "{{token('color.background')}}"
+    font-family: "{{token('typography.font.family')}}"
+    color: "{{token('color.text')}}"
+  children:
+    # Header principal
+    - type: container
+      class: "flipapp-header"
+      token:
+        background: "{{token('color.primary')}}"
+        color: "white"
+        padding: "{{token('layout.spacing.md')}}"
+        box-shadow: "{{token('shadow.base')}}"
+        z-index: "10"
+      children:
+        - type: container
+          class: "header-content"
+          token:
+            display: "flex"
+            justify-content: "space-between"
+            align-items: "center"
+            max-width: "{{token('layout.container.max-width')}}"
+            margin: "0 auto"
+            width: "100%"
+          children:
+            # Logo e título
+            - type: container
+              class: "app-branding"
+              on: "click: navigateHome"
+              token:
+                display: "flex"
+                align-items: "center"
+                cursor: "pointer"
+              children:
+                - type: container
+                  class: "app-logo"
+                  content: "🤖"
+                  token:
+                    font-size: "{{token('typography.font.size.xl')}}"
+                    margin-right: "{{token('layout.spacing.sm')}}"
+                - type: text
+                  class: "app-title"
+                  content: "FlipApp"
+                  token:
+                    font-weight: "{{token('typography.font.weight.bold')}}"
+                    font-size: "{{token('typography.font.size.lg')}}"
+            
+            # Indicadores de status de conexão
+            - type: container
+              class: "connection-status-group"
+              token:
+                display: "flex"
+                gap: "{{token('layout.spacing.md')}}"
+              children:
+                # Status do Espelho
+                - type: container
+                  class: "connection-badge"
+                  token:
+                    display: "flex"
+                    align-items: "center"
+                    gap: "{{token('layout.spacing.xs')}}"
+                    padding: "{{token('layout.spacing.xs')}} {{token('layout.spacing.sm')}}"
+                    border-radius: "{{token('layout.radius.sm')}}"
+                    background: "{{connection['espelho'] && connection['espelho'].status === 'connected' ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.1)'}}"
+                    font-size: "{{token('typography.font.size.xs')}}"
+                  children:
+                    - type: container
+                      class: "status-dot"
+                      token:
+                        width: "8px"
+                        height: "8px"
+                        border-radius: "{{token('layout.radius.circle')}}"
+                        background: "{{connection['espelho'] && connection['espelho'].status === 'connected' ? token('color.success') : token('color.alert')}}"
+                    - type: text
+                      content: "Espelho"
+                
+                # Status do WhatsApp
+                - type: container
+                  class: "connection-badge"
+                  token:
+                    display: "flex"
+                    align-items: "center"
+                    gap: "{{token('layout.spacing.xs')}}"
+                    padding: "{{token('layout.spacing.xs')}} {{token('layout.spacing.sm')}}"
+                    border-radius: "{{token('layout.radius.sm')}}"
+                    background: "{{connection['whatsapp'] && connection['whatsapp'].status === 'connected' ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.1)'}}"
+                    font-size: "{{token('typography.font.size.xs')}}"
+                  children:
+                    - type: container
+                      class: "status-dot"
+                      token:
+                        width: "8px"
+                        height: "8px"
+                        border-radius: "{{token('layout.radius.circle')}}"
+                        background: "{{connection['whatsapp'] && connection['whatsapp'].status === 'connected' ? token('color.success') : token('color.alert')}}"
+                    - type: text
+                      content: "WhatsApp"
+    
+    # Navegação por tabs
+    - type: container
+      class: "nav-tabs"
+      token:
+        display: "flex"
+        background: "{{token('color.surface')}}"
+        border-bottom: "1px solid {{token('color.border')}}"
+        overflow-x: "auto"
+        padding: "0 {{token('layout.spacing.md')}}"
+        scroll-behavior: "smooth"
+      children:
+        # Container para centralizar tabs
+        - type: container
+          token:
+            display: "flex"
+            max-width: "{{token('layout.container.max-width')}}"
+            margin: "0 auto"
+            width: "100%"
+          children:
+            # Tab: Chat
+            - type: container
+              class: "nav-tab {{activeTab === 'chat' ? 'active' : ''}}"
+              on: "click: switchTab(tabId='chat')"
+              token:
+                padding: "{{token('layout.spacing.md')}}"
+                cursor: "pointer"
+                border-bottom: "2px solid {{activeTab === 'chat' ? token('color.primary') : 'transparent'}}"
+                transition: "{{token('motion.transition.fast')}}"
+                color: "{{activeTab === 'chat' ? token('color.primary') : token('color.text')}}"
+                display: "flex"
+                align-items: "center"
+                gap: "{{token('layout.spacing.xs')}}"
+              children:
+                - type: container
+                  content: "💬"
+                - type: text
+                  content: "Chat"
+            
+            # Tab: Espelho
+            - type: container
+              class: "nav-tab {{activeTab === 'espelho' ? 'active' : ''}}"
+              on: "click: switchTab(tabId='espelho')"
+              token:
+                padding: "{{token('layout.spacing.md')}}"
+                cursor: "pointer"
+                border-bottom: "2px solid {{activeTab === 'espelho' ? token('color.primary') : 'transparent'}}"
+                transition: "{{token('motion.transition.fast')}}"
+                color: "{{activeTab === 'espelho' ? token('color.primary') : token('color.text')}}"
+                display: "flex"
+                align-items: "center"
+                gap: "{{token('layout.spacing.xs')}}"
+              children:
+                - type: container
+                  content: "🪞"
+                - type: text
+                  content: "Espelho"
+            
+            # Tab: WhatsApp
+            - type: container
+              class: "nav-tab {{activeTab === 'whatsapp' ? 'active' : ''}}"
+              on: "click: switchTab(tabId='whatsapp')"
+              token:
+                padding: "{{token('layout.spacing.md')}}"
+                cursor: "pointer"
+                border-bottom: "2px solid {{activeTab === 'whatsapp' ? token('color.primary') : 'transparent'}}"
+                transition: "{{token('motion.transition.fast')}}"
+                color: "{{activeTab === 'whatsapp' ? token('color.primary') : token('color.text')}}"
+                display: "flex"
+                align-items: "center"
+                gap: "{{token('layout.spacing.xs')}}"
+              children:
+                - type: container
+                  content: "📱"
+                - type: text
+                  content: "WhatsApp"
+            
+            # Tab: New
+            - type: container
+              class: "nav-tab {{activeTab === 'new' ? 'active' : ''}}"
+              on: "click: switchTab(tabId='new')"
+              token:
+                padding: "{{token('layout.spacing.md')}}"
+                cursor: "pointer"
+                border-bottom: "2px solid {{activeTab === 'new' ? token('color.primary') : 'transparent'}}"
+                transition: "{{token('motion.transition.fast')}}"
+                color: "{{activeTab === 'new' ? token('color.primary') : token('color.text')}}"
+                display: "flex"
+                align-items: "center"
+                gap: "{{token('layout.spacing.xs')}}"
+              children:
+                - type: container
+                  content: "✨"
+                - type: text
+                  content: "Novo"
+    
+    # Layout principal com conteúdo
+    - type: container
+      class: "main-content"
+      token:
+        display: "flex"
+        flex: "1"
+        overflow: "hidden"
+      children:
+        # Sidebar: Espelho (sempre visível em telas grandes)
+        - type: container
+          class: "sidebar-espelho"
+          token:
+            width: "300px"
+            flex-shrink: "0"
+            display: "{{isDesktop() ? 'flex' : 'none'}}"
+            flex-direction: "column"
+            border-right: "1px solid {{token('color.border')}}"
+            background: "{{token('color.surface')}}"
+            overflow: "hidden"
+            "media[{{token('layout.breakpoint.lg')}}]":
+              display: "flex"
+          children:
+            - type: include
+              source: "espelho_ui.logline"
+              props: {}
+        
+        # Conteúdo principal (direito) baseado na tab ativa
+        - type: container
+          class: "main-panel"
+          token:
+            flex: "1"
+            display: "flex"
+            flex-direction: "column"
+            overflow: "hidden"
+          children:
+            # Tab: Chat
+            - type: when
+              when: "activeTab === 'chat'"
+              children:
+                - type: include
+                  source: "chat_ui.logline"
+                  props: {}
+            
+            # Tab: Espelho (visível apenas em telas pequenas)
+            - type: when
+              when: "activeTab === 'espelho' && !isDesktop()"
+              children:
+                - type: include
+                  source: "espelho_ui.logline"
+                  props: {}
+            
+            # Tab: Espelho (placeholder em telas grandes)
+            - type: when
+              when: "activeTab === 'espelho' && isDesktop()"
+              children:
+                - type: container
+                  class: "info-placeholder"
+                  token:
+                    display: "flex"
+                    flex-direction: "column"
+                    align-items: "center"
+                    justify-content: "center"
+                    height: "100%"
+                    padding: "{{token('layout.spacing.xl')}}

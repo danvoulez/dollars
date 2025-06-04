@@ -1,0 +1,11 @@
+contract translate_message {
+  input { text: string, source: string, target: "pt" }
+  output { translated: string }
+  effect {
+    output.translated = builtin_translate(input.text, input.source, input.target)
+      ?: llm_call(
+          model: state.config.llm_model,
+          prompt: "TRANSLATE:{{input.source}}>{{input.target}}:{{input.text}}"
+        )
+  }
+}

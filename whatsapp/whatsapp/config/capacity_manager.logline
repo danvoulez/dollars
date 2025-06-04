@@ -1,0 +1,18 @@
+contract manage_capacity {
+  continuous every 60s {
+    let load = {
+      active_conv: count(state.active_conversations),
+      daily_msg: state.message_counter
+    }
+    state.system_load.push(load)
+    if load.active_conv > 10 {
+      call raise_alert(
+        level: 8,
+        message: "Capacity exceeded! Active conversations: " + load.active_conv
+      )
+    }
+    if is_midnight() {
+      state.message_counter = 0
+    }
+  }
+}

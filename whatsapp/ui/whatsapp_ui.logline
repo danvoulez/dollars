@@ -1,0 +1,150 @@
+ui:
+  - container:
+      id: "whatsapp_root"
+      style:
+        flexDirection: "column"
+        height: "100vh"
+        backgroundColor: "#f0f2f5"
+      children:
+        # Header
+        - container:
+            id: "header"
+            style:
+              padding: "12px"
+              backgroundColor: "#128C7E"
+              alignItems: "center"
+            children:
+              - text:
+                  content: "WhatsApp"
+                  style:
+                    color: "white"
+                    fontSize: "20px"
+                    fontWeight: "bold"
+
+        # Conversation List
+        - container:
+            id: "conversation_list"
+            style:
+              flex: 1
+              overflowY: "scroll"
+            children:
+              - loop:
+                  items: "{{state.conversations}}"
+                  as: "convo"
+                  children:
+                    - container:
+                        onTap: "set_active_conversation(id='{{convo.id}}')"
+                        style:
+                          padding: "12px"
+                          borderBottom: "1px solid #eee"
+                        children:
+                          - text:
+                              content: "{{convo.name}}"
+                          - when:
+                              condition: "{{convo.unread}} > 0"
+                              children:
+                                - text:
+                                    content: "({{convo.unread}})"
+                                    style:
+                                      color: "#128C7E"
+
+        # Messages Panel
+        - container:
+            id: "messages_panel"
+            style:
+              flex: 3
+              display: "{{state.active_conversation ? 'flex' : 'none'}}"
+              flexDirection: "column"
+            children:
+              # Messages History
+              - container:
+                  id: "messages_history"
+                  style:
+                    flex: 1
+                    padding: "10px"
+                    overflowY: "scroll"
+                  children:
+                    - loop:
+                        items: "{{state.messages[state.active_conversation]}}"
+                        as: "msg"
+                        children:
+                          - container:
+                              style:
+                                alignSelf: "{{msg.sender == state.user_id ? 'flex-end' : 'flex-start'}}"
+                                backgroundColor: "{{msg.sender == state.user_id ? '#DCF8C6' : 'white'}}"
+                                borderRadius: "8px"
+                                padding: "8px"
+                                marginBottom: "8px"
+                                maxWidth: "70%"
+                              children:
+                                - text:
+                                    content: "{{msg.sender}}:"
+                                    style:
+                                      fontWeight: "bold"
+                                - text:
+                                    content: "{{msg.content}}"
+                                - when:
+                                    condition: "{{msg.media_url}}"
+                                    children:
+                                      - image:
+                                          src: "{{msg.media_url}}"
+                                          style:
+                                            maxWidth: "200px"
+                                            marginTop: "8px"
+                                - when:
+                                    condition: "{{msg.status == 'unread'}}"
+                                    children:
+                                      - text:
+                                          content: "⬤"
+                                          style:
+                                            color: "#128C7E"
+                                            fontSize: "8px"
+                                            alignSelf: "flex-end"
+
+              # Input Area
+              - container:
+                  id: "input_area"
+                  style:
+                    flexDirection: "row"
+                    padding: "10px"
+                    borderTop: "1px solid #ddd"
+                  children:
+                    - input:
+                        id: "message_input"
+                        bind: "state.input_message"
+                        placeholder: "Type a message..."
+                        style:
+                          flex: 1
+                          padding: "10px"
+                          border: "1px solid #ddd"
+                          borderRadius: "20px"
+                          marginRight: "10px"
+                    - button:
+                        id: "send_button"
+                        content: "📤"
+                        onTap: "send_whatsapp_message(conversation_id='{{state.active_conversation}}')"
+                    - button:
+                        id: "attach_button"
+                        content: "📎"
+                        onTap: "open_media_picker()"
+
+        # Fallback UI
+        - when:
+            condition: "{{state.error}}"
+            children:
+              - container:
+                  style:
+                    position: "absolute"
+                    bottom: "20px"
+                    right: "20px"
+                    backgroundColor: "#ff6b6b"
+                    padding: "10px"
+                    borderRadius: "8px"
+                  children:
+                    - text:
+                        content: "Error: {{state.error}}"
+                        style:
+                          color: "white"
+                    - button:
+                        content: "Retry"
+                        onTap: "reconnect_whatsapp()"

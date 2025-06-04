@@ -1,0 +1,73 @@
+[
+  {
+    "id": "test_runner_engine_def",
+    "timestamp": "2025-06-04T02:13:34Z",
+    "type": "engine_definition",
+    "name": "LogLineOS Test Runner",
+    "description": "Defines rules for executing and validating LogLine tests.",
+    "version": "1.0.0-loglineos"
+  },
+
+  {
+    "id": "rule_assert_state",
+    "timestamp": "2025-06-04T02:13:39Z",
+    "type": "execution_rule",
+    "description": "Asserts a specific value in the global state.",
+    "match": {
+      "type": "assert_state"
+    },
+    "kernel_action": {
+      "action_type": "invoke_native_test_assertion",
+      "assertion_type": "state_equals",
+      "path_template": "{{span.path}}",
+      "expected_value_template": "{{span.expected_value}}"
+    },
+    "output_mapping": {
+      "status": "assertion.status",
+      "details": "assertion.details"
+    },
+    "audit_event_type": "test_assertion_state"
+  },
+
+  {
+    "id": "rule_assert_span_emitted",
+    "timestamp": "2025-06-04T02:13:44Z",
+    "type": "execution_rule",
+    "description": "Asserts that a specific span has been emitted during test execution.",
+    "match": {
+      "type": "assert_span_emitted"
+    },
+    "kernel_action": {
+      "action_type": "invoke_native_test_assertion",
+      "assertion_type": "span_emitted",
+      "span_type_template": "{{span.span_type}}",
+      "match_criteria_template": "{{span.match_criteria}}"
+    },
+    "output_mapping": {
+      "status": "assertion.status",
+      "details": "assertion.details"
+    },
+    "audit_event_type": "test_assertion_span"
+  },
+
+  {
+    "id": "rule_assert_error_occurred",
+    "timestamp": "2025-06-04T02:13:49Z",
+    "type": "execution_rule",
+    "description": "Asserts that an error occurred during a specific span execution.",
+    "match": {
+      "type": "assert_error_occurred"
+    },
+    "kernel_action": {
+      "action_type": "invoke_native_test_assertion",
+      "assertion_type": "error_occurred",
+      "contract_name_template": "{{span.contract_name}}",
+      "error_message_pattern_template": "{{span.error_message_pattern}}"
+    },
+    "output_mapping": {
+      "status": "assertion.status",
+      "details": "assertion.details"
+    },
+    "audit_event_type": "test_assertion_error"
+  }
+]

@@ -1,0 +1,153 @@
+# cli_definition.logline
+# Definição declarativa de todos os comandos ‘flip’.
+
+# Comando principal ‘run’
+- type: cli_command
+  name: "run"
+  description: "Inicia o FlipApp LogLineOS"
+  usage: "flip run [--config <path>] [--watch] [--env <name>]"
+  examples:
+    - "flip run"
+    - "flip run --config ./config.logline --watch"
+  flags:
+    - name: "config"
+      short: "c"
+      type: "string"
+      default: "runtime/config.logline"
+      description: "Arquivo de configuração .logline a ser carregado"
+      required: false
+    - name: "watch"
+      short: "w"
+      type: "boolean"
+      default: false
+      description: "Recarrega automaticamente quando spans ou UI mudam"
+      required: false
+    - name: "env"
+      short: "e"
+      type: "string"
+      default: "development"
+      description: "Ambiente de execução (development, staging, production)"
+      required: false
+
+# Comando ‘logs’
+- type: cli_command
+  name: "logs"
+  description: "Exibe logs de auditoria em tempo real ou históricos"
+  usage: "flip logs [tail|show|list] [--last <n>] [--level <level>]"
+  examples:
+    - "flip logs tail --level=info"
+    - "flip logs show --last=100"
+  subcommands:
+    - name: "tail"
+      description: "Acompanha logs em tempo real"
+      flags:
+        - name: "level"
+          short: "l"
+          type: "string"
+          default: "info"
+          description: "Nível mínimo de log (debug, info, warn, error)"
+          required: false
+    - name: "show"
+      description: "Mostra logs históricos"
+      flags:
+        - name: "last"
+          short: "n"
+          type: "number"
+          default: 100
+          description: "Quantidade de linhas a exibir (padrão 100)"
+          required: false
+    - name: "list"
+      description: "Lista categorias de logs disponíveis"
+      flags: []
+
+# Comando ‘audit’
+- type: cli_command
+  name: "audit"
+  description: "Gerencia auditoria de contratos"
+  usage: "flip audit [list|show <contract_name>]"
+  examples:
+    - "flip audit list"
+    - "flip audit show send_message"
+  subcommands:
+    - name: "list"
+      description: "Lista todos os contratos auditáveis"
+      flags: []
+    - name: "show"
+      description: "Mostra histórico de mudanças de um contrato"
+      args:
+        - name: "contract_name"
+          type: "string"
+          description: "Nome do contrato a inspecionar"
+          required: true
+      flags: []
+
+# Comando ‘test’
+- type: cli_command
+  name: "test"
+  description: "Executa testes .logline"
+  usage: "flip test [unit|integration] [--report <format>]"
+  examples:
+    - "flip test unit"
+    - "flip test integration --report=json"
+  subcommands:
+    - name: "unit"
+      description: "Executa testes unitários"
+      flags:
+        - name: "report"
+          short: "r"
+          type: "string"
+          default: "text"
+          description: "Formato de relatório (text, json, html)"
+          required: false
+    - name: "integration"
+      description: "Executa testes de integração"
+      flags:
+        - name: "report"
+          short: "r"
+          type: "string"
+          default: "text"
+          description: "Formato de relatório (text, json, html)"
+          required: false
+
+# Comando ‘config’
+- type: cli_command
+  name: "config"
+  description: "Exibe ou altera configurações"
+  usage: "flip config [view|get <key>|set <key> <value>]"
+  examples:
+    - "flip config view"
+    - "flip config get llm_proxy_url"
+    - "flip config set default_llm_model mistral-7b"
+  subcommands:
+    - name: "view"
+      description: "Mostra todas as configurações atuais"
+      flags: []
+    - name: "get"
+      description: "Obtém valor de uma chave específica"
+      args:
+        - name: "key"
+          type: "string"
+          description: "Chave de configuração"
+          required: true
+      flags: []
+    - name: "set"
+      description: "Define valor para uma chave específica"
+      args:
+        - name: "key"
+          type: "string"
+          description: "Chave de configuração"
+          required: true
+        - name: "value"
+          type: "string"
+          description: "Novo valor"
+          required: true
+      flags: []
+
+# Comando ‘version’
+- type: cli_command
+  name: "version"
+  description: "Exibe versão do flip CLI e do FlipApp LogLineOS"
+  usage: "flip version"
+  examples:
+    - "flip version"
+  flags: []

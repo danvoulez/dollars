@@ -1,0 +1,58 @@
+[
+  {
+    "id": "error_overlay_component_def",
+    "timestamp": "2025-06-04T02:15:49Z",
+    "type": "component_definition",
+    "name": "ErrorOverlay",
+    "version": "1.0.0-loglineos",
+    "description": "Displays a full-screen error overlay for critical UI failures.",
+    "properties": {
+      "message": { "type": "string", "required": true },
+      "details": { "type": "string", "required": false }
+    },
+    "template": [
+      {
+        "type": "container",
+        "class": "error-overlay",
+        "style": "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 0, 0, 0.8); color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999;"
+      },
+      {
+        "type": "text",
+        "content": "🚨 Erro Crítico do LogLineOS 🚨",
+        "style": "font-size: 2em; margin-bottom: 1em;"
+      },
+      {
+        "type": "text",
+        "content": "{{props.message}}",
+        "style": "font-size: 1.2em; text-align: center; max-width: 80%; margin-bottom: 1em;"
+      },
+      {
+        "type": "when",
+        "when": "props.details",
+        "children": [
+          { "type": "text", "content": "{{props.details}}", "style": "font-size: 0.9em; max-width: 80%; margin-bottom: 2em; font-family: monospace;" }
+        ]
+      },
+      {
+        "type": "button",
+        "content": "Recarregar Aplicação",
+        "on": "click: reload_application",
+        "style": "padding: 1em 2em; background: #fff; color: #d32f2f; border: none; border-radius: 5px; cursor: pointer;"
+      }
+    ]
+  },
+  {
+    "id": "contract_reload_application",
+    "timestamp": "2025-06-04T02:15:54Z",
+    "type": "contract_definition",
+    "name": "reload_application",
+    "version": "1.0.0-loglineos",
+    "description": "Reloads the entire LogLineOS application in the browser.",
+    "created_by": "LogLineOS Kernel",
+    "args_schema": {},
+    "effects": [
+      { "type": "audit_log", "level": "warn", "message": "Application reload initiated by user action." },
+      { "type": "kernel_action", "action_type": "invoke_native_browser_reload" }
+    ]
+  }
+]

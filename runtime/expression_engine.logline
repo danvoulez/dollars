@@ -1,0 +1,446 @@
+# runtime/expression_engine.logline
+# Definição declarativa do motor de expressão seguro para o LogLineOS.
+
+- type: token
+  name: WHITESPACE
+  pattern: "\\s+"
+  skip: true
+
+- type: token
+  name: NUMBER
+  pattern: "[0-9]+(\\.[0-9]+)?"
+  capture: true
+
+- type: token
+  name: STRING
+  pattern: "\\"([^\\"\\]|\\\\.)*\\""
+  capture: true
+
+- type: token
+  name: IDENTIFIER
+  pattern: "[A-Za-z_][A-Za-z0-9_]*"
+  capture: true
+
+- type: token
+  name: PLUS
+  pattern: "\\+"
+
+- type: token
+  name: MINUS
+  pattern: "-"
+
+- type: token
+  name: ASTERISK
+  pattern: "\\*"
+
+- type: token
+  name: SLASH
+  pattern: "/"
+
+- type: token
+  name: LPAREN
+  pattern: "\\("
+
+- type: token
+  name: RPAREN
+  pattern: "\\)"
+
+- type: token
+  name: AND
+  pattern: "and\\b"
+
+- type: token
+  name: OR
+  pattern: "or\\b"
+
+- type: token
+  name: EQ
+  pattern: "=="
+
+- type: token
+  name: NEQ
+  pattern: "!="
+
+- type: token
+  name: GT
+  pattern: ">"
+
+- type: token
+  name: LT
+  pattern: "<"
+
+- type: token
+  name: GTE
+  pattern: ">="
+
+- type: token
+  name: LTE
+  pattern: "<="
+
+
+# Regras de gramática e AST
+- type: rule
+  name: LiteralNumber
+  pattern:
+    - type: token
+      name: NUMBER
+  emit:
+    type: ast
+    node_type: NumberLiteral
+    transform: |
+      function(token) {
+        return { type: "NumberLiteral", value: parseFloat(token.text) };
+      }
+
+- type: rule
+  name: LiteralString
+  pattern:
+    - type: token
+      name: STRING
+  emit:
+    type: ast
+    node_type: StringLiteral
+    transform: |
+      function(token) {
+        let text = token.text.slice(1, -1);
+        return { type: "StringLiteral", value: JSON.parse(`"${text}"`) };
+      }
+
+- type: rule
+  name: Identifier
+  pattern:
+    - type: token
+      name: IDENTIFIER
+  emit:
+    type: ast
+    node_type: Identifier
+    transform: |
+      function(token) {
+        return { type: "Identifier", name: token.text };
+      }
+
+- type: rule
+  name: GroupExpression
+  pattern:
+    - type: token
+      name: LPAREN
+    - type: rule
+      name: Expression
+    - type: token
+      name: RPAREN
+  emit:
+    type: ast
+    node_type: GroupExpression
+    transform: |
+      function(_lp, exprNode, _rp) {
+        return exprNode;
+      }
+
+- type: rule
+  name: Term
+  choice:
+    - type: rule
+      name: LiteralNumber
+    - type: rule
+      name: LiteralString
+    - type: rule
+      name: Identifier
+    - type: rule
+      name: GroupExpression
+
+- type: rule
+  name: Factor
+  pattern:
+    - type: rule
+      name: Term
+    - repeat:
+        - pattern:
+            - type: choice
+              options:
+                - type: token
+                  name: ASTERISK
+                - type: token
+                  name: SLASH
+            - type: rule
+              name: Term
+  emit:
+    type: ast
+    node_type: BinaryExpression
+    transform: |
+      function(firstTerm, rest) {
+        return rest.reduce((leftNode, [opToken, rightTerm]) => ({
+          type: "BinaryExpression",
+          operator: opToken.text,
+          left: leftNode,
+          right: rightTerm
+        }), firstTerm);
+      }
+
+- type: rule
+  name: AddExpr
+  pattern:
+    - type: rule
+      name: Factor
+    - repeat:
+        - pattern:
+            - type: choice
+              options:
+                - type: token
+                  name: PLUS
+                - type: token
+                  name: MINUS
+            - type: rule
+              name: Factor
+  emit:
+    type: ast
+    node_type: BinaryExpression
+    transform: |
+      function(firstFactor, rest) {
+        return rest.reduce((leftNode, [opToken, rightFactor]) => ({
+          type: "BinaryExpression",
+          operator: opToken.text,
+          left: leftNode,
+          right: rightFactor
+        }), firstFactor);
+      }
+
+- type: rule
+  name: CompareExpr
+  pattern:
+    - type: rule
+      name: AddExpr
+    - optional:
+        - pattern:
+            - type: choice
+              options:
+                - type: token
+                  name: GT
+                - type: token
+                  name: LT
+                - type: token
+                  name: GTE
+                - type: token
+                  name: LTE
+                - type: token
+                  name: EQ
+                - type: token
+                  name: NEQ
+            - type: rule
+              name: AddExpr
+  emit:
+    type: ast
+    node_type: BinaryExpression
+    transform: |
+      function(leftAdd, maybeOpRight) {
+        if (!maybeOpRight) return leftAdd;
+        let [opToken, rightAdd] = maybeOpRight;
+        return {
+          type: "BinaryExpression",
+          operator: opToken.text,
+          left: leftAdd,
+          right: rightAdd
+        };
+      }
+
+- type: rule
+  name: LogicExpr
+  pattern:
+    - type: rule
+      name: CompareExpr
+    - repeat:
+        - pattern:
+            - type: choice
+              options:
+                - type: token
+                  name: AND
+                - type: token
+                  name: OR
+            - type: rule
+              name: CompareExpr
+  emit:
+    type: ast
+    node_type: LogicalExpression
+    transform: |
+      function(firstCompare, rest) {
+        return rest.reduce((leftNode, [opToken, rightCompare]) => ({
+          type: "LogicalExpression",
+          operator: opToken.text,
+          left: leftNode,
+          right: rightCompare
+        }), firstCompare);
+      }
+
+- type: rule
+  name: Expression
+  pattern:
+    - type: rule
+      name: LogicExpr
+  emit:
+    type: ast
+    node_type: Expression
+    transform: |
+      function(node) {
+        return node;
+      }
+
+- type: contract
+  name: EvalNumberLiteral
+  args:
+    - name: astNode
+      type: NumberLiteral
+  returns: Number
+  body: |
+    return astNode.value;
+
+- type: contract
+  name: EvalStringLiteral
+  args:
+    - name: astNode
+      type: StringLiteral
+  returns: String
+  body: |
+    return astNode.value;
+
+- type: contract
+  name: EvalIdentifier
+  args:
+    - name: astNode
+      type: Identifier
+    - name: context
+      type: Object
+  returns: Any
+  body: |
+    let varName = astNode.name;
+    if (!context.hasOwnProperty(varName)) {
+      throw Error(`Variável não definida: ${varName}`);
+    }
+    return context[varName];
+
+- type: contract
+  name: EvalBinaryExpression
+  args:
+    - name: astNode
+      type: BinaryExpression
+    - name: context
+      type: Object
+  returns: Any
+  body: |
+    let leftVal = callContract("EvalExpression", [astNode.left, context]);
+    let rightVal = callContract("EvalExpression", [astNode.right, context]);
+    switch (astNode.operator) {
+      case "+":
+        return leftVal + rightVal;
+      case "-":
+        return leftVal - rightVal;
+      case "*":
+        return leftVal * rightVal;
+      case "/":
+        if (rightVal === 0) throw Error("Divisão por zero");
+        return leftVal / rightVal;
+      case "==":
+        return leftVal === rightVal;
+      case "!=":
+        return leftVal !== rightVal;
+      case ">":
+        return leftVal > rightVal;
+      case "<":
+        return leftVal < rightVal;
+      case ">=":
+        return leftVal >= rightVal;
+      case "<=":
+        return leftVal <= rightVal;
+      default:
+        throw Error(`Operador não suportado: ${astNode.operator}`);
+    }
+
+- type: contract
+  name: EvalLogicalExpression
+  args:
+    - name: astNode
+      type: LogicalExpression
+    - name: context
+      type: Object
+  returns: Boolean
+  body: |
+    let leftVal = callContract("EvalExpression", [astNode.left, context]);
+    switch (astNode.operator) {
+      case "and":
+        if (!leftVal) return false;
+        return callContract("EvalExpression", [astNode.right, context]);
+      case "or":
+        if (leftVal) return true;
+        return callContract("EvalExpression", [astNode.right, context]);
+      default:
+        throw Error(`Operador lógico não suportado: ${astNode.operator}`);
+    }
+
+- type: contract
+  name: EvalExpression
+  args:
+    - name: astNode
+      type: Expression
+    - name: context
+      type: Object
+  returns: Any
+  body: |
+    switch (astNode.type) {
+      case "NumberLiteral":
+        return callContract("EvalNumberLiteral", [astNode]);
+      case "StringLiteral":
+        return callContract("EvalStringLiteral", [astNode]);
+      case "Identifier":
+        return callContract("EvalIdentifier", [astNode, context]);
+      case "BinaryExpression":
+        return callContract("EvalBinaryExpression", [astNode, context]);
+      case "LogicalExpression":
+        return callContract("EvalLogicalExpression", [astNode, context]);
+      case "GroupExpression":
+        return callContract("EvalExpression", [astNode, context]);
+      default:
+        throw Error(`Tipo de nó AST não reconhecido: ${astNode.type}`);
+    }
+
+- type: span
+  id: Lexer
+  inputs:
+    - name: inputText
+      type: String
+  outputs:
+    - name: tokens
+      type: Array<Token>
+  body: |
+    return scanTokens(inputText, [
+      "WHITESPACE", "NUMBER", "STRING", "IDENTIFIER", 
+      "PLUS", "MINUS", "ASTERISK", "SLASH", 
+      "LPAREN", "RPAREN", "AND", "OR", 
+      "EQ", "NEQ", "GT", "LT", "GTE", "LTE"
+    ]);
+
+- type: span
+  id: Parser
+  inputs:
+    - name: tokens
+      type: Array<Token>
+    - name: startRule
+      type: String
+  outputs:
+    - name: ast
+      type: Expression
+  body: |
+    return parseTokens(tokens, startRule);
+
+- type: span
+  id: TokenizeAndEval
+  inputs:
+    - name: inputText
+      type: String
+    - name: context
+      type: Object
+  outputs:
+    - name: result
+      type: Any
+  body: |
+    let tokens = callSpan("Lexer", [inputText]);
+    let astTree = callSpan("Parser", [tokens, "Expression"]);
+    let value = callContract("EvalExpression", [astTree, context]);
+    return { result: value };

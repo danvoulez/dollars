@@ -1,0 +1,18 @@
+contract ghost_sale_init {
+  input { message_id: string }
+  effect {
+    let conv_id = get_conversation(input.message_id)
+    if !state.ghost_sales[conv_id] {
+      state.ghost_sales[conv_id] = {
+        id: generate_id(),
+        status: "initiated",
+        created: now(),
+        last_update: now(),
+        messages: [input.message_id],
+        incentive_log: [],
+        hesitation_count: 0
+      }
+      audit_log("GHOST_SALE_INIT", state.ghost_sales[conv_id])
+    }
+  }
+}

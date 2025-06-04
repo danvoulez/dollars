@@ -1,0 +1,14 @@
+contract summarize_conversation {
+  input { conversation_id: string }
+  output { summary: string }
+  effect {
+    let messages = get_last_messages(input.conversation_id, 40)
+    let prompt = "SUMMARIZE_CONVERSATION: " + messages
+    output.summary = llm_call(
+      model: state.config.llm_model,
+      prompt: prompt
+    )
+    state.summaries[input.conversation_id] = output.summary
+    audit_log("CONVERSATION_SUMMARY", {conversation_id: input.conversation_id, summary: output.summary})
+  }
+}

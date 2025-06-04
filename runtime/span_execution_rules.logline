@@ -1,0 +1,15 @@
+# span_execution_rules.logline
+# Regras declarativas para execução de spans, incluindo LLM
+
+- type: execution_rule
+  for_span_type: llm_request
+  description: "Regra para processar llm_request, chamando o backend apropriado"
+  execution_logic:
+    - type: kernel_action
+      action: "call_llm_backend"
+      args:
+        prompt: "{{span.prompt}}"
+        model: "{{span.model}}"
+        temperature: "{{span.temperature}}"
+        max_tokens: "{{span.max_tokens}}"
+      response_contract: "{{span.on_response}}"

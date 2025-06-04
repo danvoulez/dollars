@@ -1,0 +1,39 @@
+[
+  {
+    "id": "test_suite_llm_contracts",
+    "timestamp": "2025-06-04T02:14:09Z",
+    "type": "test_suite",
+    "name": "LLM Contracts Unit Tests",
+    "description": "Verifies contracts for LLM interaction.",
+    "tests": [
+      {
+        "id": "test_process_llm_response_success",
+        "timestamp": "2025-06-04T02:14:14Z",
+        "type": "test_case",
+        "name": "process_llm_response contract - success",
+        "setup_effects": [
+          { "type": "state_mutation", "path": "chat.is_typing", "value": "true" },
+          { "type": "state_mutation", "path": "chat.history.test_conv_id", "value": [] }
+        ],
+        "execute_contract": {
+          "contract_name": "process_llm_response",
+          "args": {
+            "response_content": "This is an LLM response.",
+            "conversation_id": "test_conv_id"
+          }
+        },
+        "assertions": [
+          { "type": "assert_state", "path": "chat.is_typing", "expected_value": "false" },
+          {
+            "type": "assert_state",
+            "path": "chat.history.test_conv_id",
+            "expected_value_pattern": ".*This is an LLM response.*"
+          },
+          { "type": "assert_span_emitted", "span_type": "ui_scroll_to", "match_criteria": { "selector": ".chat-history-container" } },
+          { "type": "assert_span_emitted", "span_type": "ui_haptic_feedback", "match_criteria": { "pattern": "short_impact" } },
+          { "type": "assert_span_emitted", "span_type": "ui_play_sound", "match_criteria": { "sound_path": "/sounds/message_received.mp3" } }
+        ]
+      }
+    ]
+  }
+]

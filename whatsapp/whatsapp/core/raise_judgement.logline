@@ -1,0 +1,23 @@
+contract raise_judgement {
+  input {
+    type: "fail_sale" | "negligence",
+    target: agent_id,
+    evidence: any
+  }
+  effect {
+    state.judgements.push({
+      id: generate_id(),
+      type: input.type,
+      target: input.target,
+      timestamp: now(),
+      evidence: input.evidence,
+      status: "pending"
+    })
+    if input.type == "negligence" {
+      state.agents[input.target].penalty_score += 10
+      if state.agents[input.target].penalty_score > 50 {
+        suspend_agent(input.target)
+      }
+    }
+  }
+}

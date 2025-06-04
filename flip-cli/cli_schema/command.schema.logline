@@ -1,0 +1,45 @@
+# cli_schema/command.schema.logline
+# Schema para validação de um comando no CLI
+
+- type: schema
+  name: "CommandSchema"
+  properties:
+    name:
+      type: "string"
+      pattern: "^[a-z]+$"
+      required: true
+    description:
+      type: "string"
+      required: true
+    usage:
+      type: "string"
+      required: true
+    examples:
+      type: "array"
+      items:
+        type: "string"
+      required: false
+    flags:
+      type: "array"
+      items:
+        type: "FlagSchemaReference"
+      required: false
+    subcommands:
+      type: "array"
+      items:
+        type: "CommandSchema"
+      required: false
+    args:
+      type: "array"
+      items:
+        type: "ArgSchemaReference"
+      required: false
+
+# Referências para flags e args
+- type: schema
+  name: "FlagSchemaReference"
+  ref: "cli_schema/flag.schema.logline#FlagSchema"
+
+- type: schema
+  name: "ArgSchemaReference"
+  ref: "cli_schema/arg.schema.logline#ArgSchema"

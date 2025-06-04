@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loading LogLineOS...</title>
+  <!-- Styles for initial loading only -->
+  <style>
+    body { margin: 0; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f0f4f8; color: #212121; }
+    .loading-container { text-align: center; }
+    .loading-spinner { width: 40px; height: 40px; border: 4px solid rgba(0, 0, 0, 0.1); border-radius: 50%; border-top-color: #1a8cff; animation: spin 1s linear infinite; margin: 0 auto 15px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div id="loglineos-root">
+    <div class="loading-container">
+      <div class="loading-spinner"></div>
+      <p>Iniciando LogLineOS...</p>
+    </div>
+  </div>
+  <!-- O Executor (binário WASM) é carregado aqui.
+       Exemplo para Go/WASM: -->
+  <script src="/path/to/wasm_exec.js"></script> <!-- Boilerplate para Go/WASM -->
+  <script>
+    // Carrega o binário WASM do Executor
+    const go = new Go(); // Instância do runtime Go
+    WebAssembly.instantiateStreaming(fetch("/executor.wasm"), go.importObject).then((result) => {
+      go.run(result.instance);
+      // Uma vez que o Executor está rodando, ele assume o controle,
+      // lendo 'logline.yml' e iniciando a aplicação LogLineOS.
+    }).catch(err => {
+      console.error("Error loading LogLineOS Executor WASM:", err);
+      document.getElementById('loglineos-root').innerHTML = "<h1>Error</h1><p>Failed to load LogLineOS. Check console.</p>";
+    });
+  </script>
+</body>
+</html>

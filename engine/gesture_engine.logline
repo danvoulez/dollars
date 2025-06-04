@@ -1,0 +1,72 @@
+[
+  {
+    "id": "gesture_engine_meta_def",
+    "timestamp": "2024-06-08T16:00:00Z",
+    "type": "engine_definition",
+    "name": "Gesture Engine",
+    "description": "Defines rules for detecting and reacting to user gestures.",
+    "version": "1.0.0-loglineos"
+  },
+
+  {
+    "id": "rule_register_swipe_gesture",
+    "timestamp": "2024-06-08T16:00:05Z",
+    "type": "execution_rule",
+    "description": "Registers a swipe gesture listener on a DOM element for touch and mouse.",
+    "match": {
+      "type": "gesture_register_swipe"
+    },
+    "kernel_action": {
+      "action_type": "invoke_native_gesture_register_swipe",
+      "element_selector_template": "{{span.selector}}",
+      "direction_template": "{{span.direction}}",
+      "threshold_template": "{{span.threshold}}",
+      "callback_contract_name_template": "{{span.on_swipe_contract}}"
+    },
+    "output_mapping": {
+      "listener_id": "gesture_registration.listener_id",
+      "status": "gesture_registration.status"
+    },
+    "audit_event_type": "gesture_swipe_registration"
+  },
+
+  {
+    "id": "rule_register_tap_gesture",
+    "timestamp": "2024-06-08T16:00:10Z",
+    "type": "execution_rule",
+    "description": "Registers a tap gesture listener on a DOM element.",
+    "match": {
+      "type": "gesture_register_tap"
+    },
+    "kernel_action": {
+      "action_type": "invoke_native_gesture_register_tap",
+      "element_selector_template": "{{span.selector}}",
+      "max_duration_ms_template": "{{span.max_duration_ms | default(300)}}",
+      "max_movement_px_template": "{{span.max_movement_px | default(10)}}",
+      "callback_contract_name_template": "{{span.on_tap_contract}}"
+    },
+    "output_mapping": {
+      "listener_id": "gesture_registration.listener_id",
+      "status": "gesture_registration.status"
+    },
+    "audit_event_type": "gesture_tap_registration"
+  },
+
+  {
+    "id": "rule_unregister_gesture_listener",
+    "timestamp": "2024-06-08T16:00:15Z",
+    "type": "execution_rule",
+    "description": "Unregisters a gesture listener by its ID.",
+    "match": {
+      "type": "gesture_unregister"
+    },
+    "kernel_action": {
+      "action_type": "invoke_native_gesture_unregister",
+      "listener_id_template": "{{span.listener_id}}"
+    },
+    "output_mapping": {
+      "status": "gesture_status.status"
+    },
+    "audit_event_type": "gesture_unregistration"
+  }
+]

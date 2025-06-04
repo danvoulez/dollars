@@ -1,0 +1,119 @@
+[
+  {
+    "id": "span_validator_engine_def",
+    "timestamp": "2025-06-04T02:14:39Z",
+    "type": "engine_definition",
+    "name": "Span Validator Engine",
+    "description": "Defines rules for validating incoming LogLine spans against schemas.",
+    "version": "1.0.0-loglineos"
+  },
+
+  {
+    "id": "schema_base_span",
+    "timestamp": "2025-06-04T02:14:44Z",
+    "type": "schema_definition",
+    "name": "base_span_schema",
+    "properties": {
+      "id": { "type": "string", "required": true, "pattern": "^[a-zA-Z0-9_-]+$" },
+      "timestamp": { "type": "string", "required": true, "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$" },
+      "type": { "type": "string", "required": true, "pattern": "^[a-zA-Z_]+$" }
+    }
+  },
+
+  {
+    "id": "schema_ui_animate",
+    "timestamp": "2025-06-04T02:14:49Z",
+    "type": "schema_definition",
+    "name": "ui_animate_schema",
+    "extends": "base_span_schema",
+    "properties": {
+      "selector": { "type": "string", "required": true },
+      "keyframes": { "type": "array", "required": true, "min_length": 2 },
+      "options": { "type": "object", "required": false }
+    }
+  },
+
+  {
+    "id": "rule_validate_incoming_span",
+    "timestamp": "2025-06-04T02:14:54Z",
+    "type": "execution_rule",
+    "description": "Validates an incoming span against its defined schema before execution.",
+    "match": {
+      "type": "internal_span_validation_request"
+    },
+    "kernel_action": {
+      "action_type": "invoke_native_schema_validator",
+      "schema_name_template": "get_schema_for_span_type({{span.span_to_validate.type}})",
+      "data_to_validate_template": "{{span.span_to_validate}}"
+    },
+    "output_mapping": {
+      "is_valid": "validation_result.status",
+      "errors": "validation_result.messages"
+    },
+    "audit_event_type": "span_validation_execution"
+  },
+
+  {
+    "id": "contract_get_schema_for_span_type",
+    "timestamp": "2025-06-04T02:14:59Z",
+    "type": "contract_definition",
+    "name": "get_schema_for_span_type",
+    "version": "1.0.0-loglineos",
+    "description": "Returns the schema definition for a given span type.",
+    "created_by": "LogLineOS Kernel",
+    "args_schema": {
+      "span_type": { "type": "string", "required": true }
+    },
+    "effects": [
+      {
+        "type": "switch",
+        "expression": "args.span_type",
+        "cases": [
+          {
+            "value": "ui_animate",
+            "effects": [
+              { "type": "return_value", "value": "{{lookup_schema('ui_animate_schema')}}" }
+            ]
+          },
+          {
+            "value": "llm_query",
+            "effects": [
+              { "type": "return_value", "value": "{{lookup_schema('llm_query_schema')}}" }
+            ]
+          }
+        ],
+        "default_effects": [
+          { "type": "return_value", "value": "{{lookup_schema('base_span_schema')}}" }
+        ]
+      }
+    ]
+  },
+
+  {
+    "id": "contract_handle_invalid_span_fallback",
+    "timestamp": "2025-06-04T02:15:04Z",
+    "type": "contract_definition",
+    "name": "handle_invalid_span_fallback",
+    "version": "1.0.0-loglineos",
+    "description": "Fallback contract executed when a span fails validation.",
+    "created_by": "LogLineOS Kernel",
+    "args_schema": {
+      "span_id": { "type": "string", "required": true },
+      "span_type": { "type": "string", "required": true },
+      "validation_errors": { "type": "array", "required": true }
+    },
+    "effects": [
+      {
+        "type": "audit_log",
+        "level": "error",
+        "message": "Invalid span received: {{args.span_type}} (ID: {{args.span_id}})",
+        "context": { "errors": "{{args.validation_errors}}" }
+      },
+      {
+        "type": "ui_notification",
+        "level": "error",
+        "content_template": "Erro de span: '{{args.span_type}}' inválido. Detalhes no log de auditoria."
+      }
+    ]
+  }
+]

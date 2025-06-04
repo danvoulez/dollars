@@ -1,0 +1,187 @@
+[
+  {
+    "id": "flip_cli_definition",
+    "timestamp": "2025-06-04T02:22:10Z",
+    "type": "cli_definition",
+    "name": "flip",
+    "description": "LogLineOS Command Line Interface",
+    "version": "1.0.0-loglineos"
+  },
+
+  {
+    "id": "command_run_with_simulation",
+    "timestamp": "2025-06-04T02:22:15Z",
+    "type": "cli_command",
+    "name": "run",
+    "description": "Start the LogLineOS application",
+    "flags": [
+      {
+        "name": "watch",
+        "short": "w",
+        "description": "Watch for file changes and reload",
+        "type": "boolean",
+        "default": false
+      },
+      {
+        "name": "config",
+        "short": "c",
+        "description": "Path to config file",
+        "type": "string",
+        "default": "runtime/config.logline"
+      },
+      {
+        "name": "simulate",
+        "short": "s",
+        "description": "Run in simulation mode (dry-run)",
+        "type": "boolean",
+        "default": false
+      },
+      {
+        "name": "port",
+        "short": "p",
+        "description": "HTTP server port",
+        "type": "integer",
+        "default": 8080
+      }
+    ],
+    "execution_contract": "cli_run_application"
+  },
+
+  {
+    "id": "contract_cli_run_application",
+    "timestamp": "2025-06-04T02:22:20Z",
+    "type": "contract_definition",
+    "name": "cli_run_application",
+    "version": "1.0.0-loglineos",
+    "description": "Executes the run command with all options",
+    "created_by": "LogLineOS CLI",
+    "args_schema": {
+      "watch": { "type": "boolean", "default": false },
+      "config": { "type": "string", "default": "runtime/config.logline" },
+      "simulate": { "type": "boolean", "default": false },
+      "port": { "type": "integer", "default": 8080 }
+    },
+    "effects": [
+      {
+        "type": "when",
+        "when": "args.simulate === true",
+        "effects": [
+          {
+            "type": "contract_call",
+            "contract_name": "enable_simulation_mode",
+            "args": { "simulation_level": "full" }
+          }
+        ]
+      },
+      {
+        "type": "audit_log",
+        "level": "info",
+        "message": "🚀 Starting FlipApp LogLineOS",
+        "context": {
+          "mode": "{{args.simulate ? 'SIMULATION' : 'NORMAL'}}",
+          "watch": "{{args.watch}}",
+          "port": "{{args.port}}"
+        }
+      },
+      {
+        "type": "kernel_action",
+        "action_type": "start_http_server",
+        "port_template": "{{args.port}}",
+        "static_dir": "public",
+        "watch_mode": "{{args.watch}}"
+      },
+      {
+        "type": "when",
+        "when": "args.watch === true",
+        "effects": [
+          {
+            "type": "kernel_action",
+            "action_type": "start_file_watcher",
+            "watch_patterns": ["*.logline", "**/*.logline"],
+            "on_change_contract": "reload_application"
+          }
+        ]
+      }
+    ]
+  },
+
+  {
+    "id": "command_simulate",
+    "timestamp": "2025-06-04T02:22:25Z",
+    "type": "cli_command",
+    "name": "simulate",
+    "description": "Run contracts in simulation mode",
+    "arguments": [
+      {
+        "name": "contract_name",
+        "description": "Name of the contract to simulate",
+        "required": true
+      }
+    ],
+    "flags": [
+      {
+        "name": "args",
+        "short": "a",
+        "description": "JSON arguments for the contract",
+        "type": "string",
+        "default": "{}"
+      },
+      {
+        "name": "level",
+        "short": "l",
+        "description": "Simulation detail level",
+        "type": "string",
+        "enum": ["basic", "full", "verbose"],
+        "default": "full"
+      }
+    ],
+    "execution_contract": "cli_simulate_contract"
+  },
+
+  {
+    "id": "contract_cli_simulate_contract",
+    "timestamp": "2025-06-04T02:22:30Z",
+    "type": "contract_definition",
+    "name": "cli_simulate_contract",
+    "version": "1.0.0-loglineos",
+    "description": "Simulates a specific contract execution",
+    "created_by": "LogLineOS CLI",
+    "args_schema": {
+      "contract_name": { "type": "string", "required": true },
+      "args": { "type": "string", "default": "{}" },
+      "level": { "type": "string", "enum": ["basic", "full", "verbose"], "default": "full" }
+    },
+    "effects": [
+      {
+        "type": "contract_call",
+        "contract_name": "enable_simulation_mode",
+        "args": { "simulation_level": "{{args.level}}" }
+      },
+      {
+        "type": "audit_log",
+        "level": "info",
+        "message": "🔍 Simulating contract: {{args.contract_name}}",
+        "context": { "simulation_started": true }
+      },
+      {
+        "type": "kernel_action",
+        "action_type": "parse_json_string",
+        "json_string_template": "{{args.args}}",
+        "response_path": "temp.parsed_args"
+      },
+      {
+        "type": "contract_call",
+        "contract_name": "{{args.contract_name}}",
+        "args": "{{temp.parsed_args}}"
+      },
+      {
+        "type": "contract_call",
+        "contract_name": "simulation_summary"
+      },
+      {
+        "type": "contract_call",
+        "contract_name": "disable_simulation_mode"
+      }
+    ]
+  }
+]

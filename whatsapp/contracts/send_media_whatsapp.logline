@@ -1,0 +1,37 @@
+contract:
+  name: "send_media_whatsapp"
+  args:
+    conversation_id: string
+    media_type: "image|audio|document"
+    file_path: string
+  effects:
+    - type: "http_request"
+      method: "POST"
+      url: "/api/upload_media"
+      body:
+        file: "{{args.file_path}}"
+        type: "{{args.media_type}}"
+      on_success:
+        - type: "state_append"
+          path: "messages.{{args.conversation_id}}"
+          value:
+            id: "{{generate_uuid}}"
+            conversation_id: "{{args.conversation_id}}"
+            sender: "{{state.user_id}}"
+            media_url: "{{response.body.url}}"
+            media_type: "{{args.media_type}}"
+            timestamp: "{{timestamp_now}}"
+            status: "sent"
+        - type: "contract_call"
+          contract: "send_whatsapp_message"
+          args:
+            conversation_id: "{{args.conversation_id}}"
+            content: "{{args.media_type}} sent"
+      on_failure:
+        - type: "state_mutation"
+          path: "state.error"
+          value: "Failed to upload media"
+        - type: "haptic"
+          pattern: "long"
+    - type: "audit_log_info"
+      message: "📤 Media sent to {{args.conversation_id}} (type: {{args.media_type}})"

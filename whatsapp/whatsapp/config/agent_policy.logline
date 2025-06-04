@@ -1,0 +1,13 @@
+policy default_agent_policy {
+  analysis_model: "local/gemma-2b",
+  prompt_template: """
+    ANALYZE_CONVERSATION:
+    CONTEXT: {{CONTEXT}}
+    POLICIES:
+      - Intervene if risk_score > 7
+      - Suggest if ghost_sale active
+      - Alert if keywords: [urgente, socorro, acidente]
+    OUTPUT_FORMAT: json
+  """,
+  risk_threshold: 7
+}

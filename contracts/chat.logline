@@ -1,0 +1,229 @@
+[
+  {
+    "id": "contract_send_message",
+    "timestamp": "2025-06-04T02:12:18Z",
+    "type": "contract_definition",
+    "name": "send_message",
+    "version": "1.0.0-loglineos",
+    "description": "Sends a user message in the chat and triggers an LLM response.",
+    "created_by": "LogLineOS Kernel",
+    "args_schema": {
+      "message": { "type": "string", "required": true, "min_length": 1, "max_length": 1000 },
+      "conversation_id": { "type": "string", "required": true }
+    },
+    "middleware": {
+      "before": [
+        { "type": "audit_log", "level": "info", "message": "Attempting to send message to {{args.conversation_id}}" }
+      ],
+      "after": [
+        { "type": "audit_log", "level": "info", "message": "Message sent successfully." }
+      ],
+      "onError": [
+        { "type": "audit_log", "level": "error", "message": "Failed to send message: {{error.message}}" },
+        { "type": "ui_notification", "level": "error", "content_template": "Erro ao enviar mensagem: {{error.message}}" }
+      ]
+    },
+    "rate_limit": { "max_calls": 10, "window_ms": 60000 },
+    "effects": [
+      {
+        "id": "effect_clear_input",
+        "type": "state_mutation",
+        "path": "chat.message_input",
+        "value": ""
+      },
+      {
+        "id": "effect_add_user_message",
+        "type": "state_mutation",
+        "path": "chat.history.{{args.conversation_id}}",
+        "append_value": {
+          "id": "{{generate_uuid()}}",
+          "sender": "user",
+          "content": "{{args.message}}",
+          "timestamp": "{{get_timestamp()}}"
+        }
+      },
+      {
+        "id": "effect_scroll_to_bottom_after_user_msg",
+        "type": "ui_scroll_to",
+        "selector": ".chat-history-container",
+        "options": { "block": "end" }
+      },
+      {
+        "id": "effect_set_typing_indicator",
+        "type": "state_mutation",
+        "path": "chat.is_typing",
+        "value": "true"
+      },
+      {
+        "id": "effect_llm_query",
+        "type": "llm_query",
+        "prompt_template": "{{args.message}}",
+        "model_template": "{{state.config.default_llm_model}}",
+        "context_template": "{{state.chat.history[args.conversation_id]}}",
+        "on_response_contract_name_template": "process_llm_response",
+        "on_error_contract_name_template": "handle_llm_query_error"
+      }
+    ]
+  },
+
+  {
+    "id": "contract_process_llm_response",
+    "timestamp": "2025-06-04T02:12:23Z",
+    "type": "contract_definition",
+    "name": "process_llm_response",
+    "version": "1.0.0-loglineos",
+    "description": "Processes the LLM response and adds it to chat history.",
+    "created_by": "LogLineOS Kernel",
+    "args_schema": {
+      "response_content": { "type": "string", "required": true },
+      "conversation_id": { "type": "string", "required": true }
+    },
+    "effects": [
+      {
+        "id": "effect_unset_typing_indicator",
+        "type": "state_mutation",
+        "path": "chat.is_typing",
+        "value": "false"
+      },
+      {
+        "id": "effect_add_bot_message",
+        "type": "state_mutation",
+        "path": "chat.history.{{args.conversation_id}}",
+        "append_value": {
+          "id": "{{generate_uuid()}}",
+          "sender": "bot",
+          "content": "{{args.response_content}}",
+          "timestamp": "{{get_timestamp()}}"
+        }
+      },
+      {
+        "id": "effect_scroll_to_bottom_after_bot_msg",
+        "type": "ui_scroll_to",
+        "selector": ".chat-history-container",
+        "options": { "block": "end" }
+      },
+      {
+        "id": "effect_haptic_feedback_message",
+        "type": "ui_haptic_feedback",
+        "pattern": "short_impact"
+      },
+      {
+        "id": "effect_play_message_received_sound",
+        "type": "ui_play_sound",
+        "sound_path": "/sounds/message_received.mp3"
+      }
+    ]
+  },
+
+  {
+    "id": "contract_handle_llm_query_error",
+    "timestamp": "2025-06-04T02:12:28Z",
+    "type": "contract_definition",
+    "name": "handle_llm_query_error",
+    "version": "1.0.0-loglineos",
+    "description": "Handles errors from LLM queries.",
+    "created_by": "LogLineOS Kernel",
+    "args_schema": {
+      "error_message": { "type": "string", "required": true }
+    },
+    "effects": [
+      {
+        "id": "effect_unset_typing_indicator_on_error",
+        "type": "state_mutation",
+        "path": "chat.is_typing",
+        "value": "false"
+      },
+      {
+        "id": "effect_add_error_message_to_chat",
+        "type": "state_mutation",
+        "path": "chat.history.{{args.conversation_id}}",
+        "append_value": {
+          "id": "{{generate_uuid()}}",
+          "sender": "system",
+          "content": "Ops! Erro do LLM: {{args.error_message}}",
+          "timestamp": "{{get_timestamp()}}",
+          "is_error": true
+        }
+      },
+      {
+        "id": "effect_haptic_feedback_error",
+        "type": "ui_haptic_feedback",
+        "pattern": "long_impact"
+      },
+      {
+        "id": "effect_play_error_sound",
+        "type": "ui_play_sound",
+        "sound_path": "/sounds/error.mp3"
+      }
+    ]
+  },
+
+  {
+    "id": "contract_user_typing_debounce",
+    "timestamp": "2025-06-04T02:12:33Z",
+    "type": "contract_definition",
+    "name": "user_typing_debounce",
+    "version": "1.0.0-loglineos",
+    "description": "Manages the user typing indicator with debounce logic.",
+    "created_by": "LogLineOS Kernel",
+    "args_schema": {},
+    "effects": [
+      {
+        "id": "effect_set_typing_true",
+        "type": "state_mutation",
+        "path": "chat.is_typing",
+        "value": "true"
+      },
+      {
+        "id": "effect_debounce_typing_timeout",
+        "type": "kernel_action",
+        "action_type": "invoke_native_debounce_timeout",
+        "timeout_ms": 3000,
+        "on_timeout_contract_name": "reset_typing_indicator",
+        "debounce_id": "chat_typing"
+      }
+    ]
+  },
+
+  {
+    "id": "contract_reset_typing_indicator",
+    "timestamp": "2025-06-04T02:12:38Z",
+    "type": "contract_definition",
+    "name": "reset_typing_indicator",
+    "version": "1.0.0-loglineos",
+    "description": "Resets the chat typing indicator after debounce.",
+    "created_by": "LogLineOS Kernel",
+    "args_schema": {},
+    "effects": [
+      {
+        "id": "effect_set_typing_false",
+        "type": "state_mutation",
+        "path": "chat.is_typing",
+        "value": "false"
+      }
+    ]
+  },
+
+  {
+    "id": "contract_input_key_press",
+    "timestamp": "2025-06-04T02:12:43Z",
+    "type": "contract_definition",
+    "name": "input_key_press",
+    "version": "1.0.0-loglineos",
+    "description": "Handles keypress events for input fields, especially 'Enter' to send.",
+    "created_by": "LogLineOS Kernel",
+    "args_schema": {
+      "key": { "type": "string", "required": true },
+      "target_value": { "type": "string", "required": true },
+      "contract_on_enter": { "type": "string", "required": false }
+    },
+    "effects": [
+      {
+        "type": "contract_call",
+        "contract_name": "{{args.contract_on_enter}}",
+        "args": { "message": "{{args.target_value}}" },
+        "when": "args.key === 'Enter' && args.contract_on_enter"
+      }
+    ]
+  }
+]

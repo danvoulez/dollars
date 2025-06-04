@@ -1,0 +1,183 @@
+# runtime/cli_engine.logline
+
+# 1. Validar cli_definition.logline
+- type: span
+  id: "load_cli_definition"
+  body: |
+    let raw = readFile("/flip-cli/cli_definition.logline");
+    return { content: raw };
+
+- type: span
+  id: "parse_cli_definition"
+  inputs:
+    - name: content
+      type: "String"
+  outputs:
+    - name: cli_defs
+      type: "Array<CliCommand>"
+  body: |
+    let ast = parseLogLineToAST(inputs.content);
+    return { cli_defs: ast.blocks.filter(b => b.type === "cli_command") };
+
+- type: span
+  id: "validate_cli_definition"
+  inputs:
+    - name: cli_defs
+      type: "Array<CliCommand>"
+  body: |
+    for (let cmd of inputs.cli_defs) {
+      validateSchema("CommandSchema", cmd);
+      if (cmd.flags) {
+        for (let f of cmd.flags) { validateSchema("FlagSchema", f); }
+      }
+      if (cmd.args) {
+        for (let a of cmd.args) { validateSchema("ArgSchema", a); }
+      }
+      if (cmd.subcommands) {
+        # recursivamente validar subcommands
+        callContract("validate_cli_definition", { cli_defs: cmd.subcommands });
+      }
+    }
+    return {};
+
+# 2. Capturar argv do sistema
+- type: span
+  id: "read_cli_argv"
+  outputs:
+    - name: argv
+      type: "Array<String>"
+  body: |
+    return { argv: getOsArgs() };
+
+# 3. Parsear argv em estrutura interna
+- type: contract
+  name: "parse_cli_input"
+  args:
+    argv: "Array<String>"
+    cli_defs: "Array<CliCommand>"
+  returns: "CliInput"
+  body: |
+    let input = {};
+    input.command = inputs.argv[1] || "";
+    input.flags = {};
+    input.args = [];
+    let defs = inputs.cli_defs;
+    let i = 2;
+    while (i < inputs.argv.length) {
+      let token = inputs.argv[i];
+      if (token.startsWith("--")) {
+        let key = token.slice(2);
+        let def = defs.find(d => d.flags && d.flags.find(f => f.name === key));
+        if (!def) { throw Error(`Flag '--${key}' não reconhecida`); }
+        let fDef = def.flags.find(f => f.name === key);
+        if (fDef.type === "boolean") {
+          input.flags[key] = true;
+          i += 1;
+        } else {
+          input.flags[key] = inputs.argv[i+1];
+          i += 2;
+        }
+      } else if (token.startsWith("-")) {
+        let key = token.slice(1);
+        let def = defs.find(d => d.flags && d.flags.find(f => f.short === key));
+        if (!def) { throw Error(`Flag '-${key}' não reconhecida`); }
+        let fDef = def.flags.find(f => f.short === key);
+        if (fDef.type === "boolean") {
+          input.flags[fDef.name] = true;
+          i += 1;
+        } else {
+          input.flags[fDef.name] = inputs.argv[i+1];
+          i += 2;
+        }
+      } else {
+        input.args.push(token);
+        i += 1;
+      }
+    }
+    return input;
+
+# 4. Executar ação principal baseado no input
+- type: span
+  id: "cli_execute"
+  inputs:
+    - name: cli_input
+      type: "CliInput"
+    - name: cli_defs
+      type: "Array<CliCommand>"
+  body: |
+    let cmdDef = inputs.cli_defs.find(d => d.name === inputs.cli_input.command);
+    if (!cmdDef) { throw Error(`Comando '${inputs.cli_input.command}' não encontrado`); }
+    if (cmdDef.flags) {
+      for (let fDef of cmdDef.flags) {
+        if (fDef.required && !(fDef.name in inputs.cli_input.flags)) {
+          throw Error(`Flag '--${fDef.name}' é obrigatória para '${cmdDef.name}'`);
+        }
+      }
+    }
+    return { 
+      command_name: cmdDef.name,
+      flags: inputs.cli_input.flags,
+      args: inputs.cli_input.args,
+      cli_defs: inputs.cli_defs
+    };
+
+# 5. Gerar logs de entrada
+- type: span
+  id: "log_cli_input"
+  inputs:
+    - name: cli_exec
+      type: "Object"
+  body: |
+    let ts = nowIso();
+    let log = {
+      id: `cli_log_${Date.now()}`,
+      timestamp: ts,
+      level: "info",
+      type: "cli_input_received",
+      payload: inputs.cli_exec
+    };
+    persistSpan(log, "cli_logs");
+    return {};
+
+# 6. Dispatch das actions do comando
+- type: contract
+  name: "dispatch_cli_action"
+  args:
+    command_name: "string"
+    flags: "object"
+    args: "array"
+    cli_defs: "Array<CliCommand>"
+  effects:
+    - type: span
+      id: "find_execution_rule"
+      body: |
+        let defs = inputs.cli_defs;
+        let rule = findExecutionRule(inputs.command_name);
+        if (!rule) { throw Error(`Nenhuma regra de execução para comando ${inputs.command_name}`); }
+        return { rule };
+    - type: execution_rule_span
+      rule_id: "{{find_execution_rule.rule.id}}"
+      context:
+        flags: "{{inputs.flags}}"
+        args: "{{inputs.args}}"
+
+# 7. Regra genérica de erro no CLI
+- type: span
+  id: "catch_cli_error"
+  description: "Captura erros de CLI"
+  inputs:
+    - name: error
+      type: "Object"
+  body: |
+    let ts = nowIso();
+    let log = {
+      id: `cli_error_${Date.now()}`,
+      timestamp: ts,
+      level: "error",
+      type: "cli_execution_error",
+      message: inputs.error.message,
+      stack: inputs.error.stack || ""
+    };
+    persistSpan(log, "cli_logs");
+    print(`\u001b[31m❌ Erro: ${inputs.error.message}\u001b[0m`);
+    exit(1);

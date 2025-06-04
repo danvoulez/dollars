@@ -1,0 +1,28 @@
+contract ghost_sale_abort {
+  input { 
+    conversation_id: string,
+    reason: "timeout" | "high_hesitation" | "no_response"
+  }
+  effect {
+    let sale = state.ghost_sales[input.conversation_id]
+    if sale {
+      sale.status = "aborted"
+      sale.end_reason = input.reason
+      if input.reason == "no_response" {
+        state.affairs.push({
+          type: "negligence",
+          agent: sale.last_agent,
+          conversation: input.conversation_id,
+          timestamp: now(),
+          penalty: calculate_penalty(sale)
+        })
+        call raise_judgement(
+          type: "fail_sale",
+          target: sale.last_agent,
+          evidence: sale
+        )
+      }
+      audit_log("GHOST_SALE_ABORT", sale)
+    }
+  }
+}

@@ -1,0 +1,10 @@
+# llm_request.logline
+# Declaração de um span para requisição LLM
+
+- type: llm_request
+  id: "{{generate_uuid()}}"
+  prompt: "{{state.input_text}}"
+  model: "mistral-7b"
+  max_tokens: 200
+  temperature: 0.7
+  on_response: "apply_completion_result"

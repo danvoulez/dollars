@@ -1,0 +1,55 @@
+test "Ghost sale abandonment triggers negligence affair" {
+  simulate websocket_event(
+    type: "message",
+    data: {text: "Quero comprar urgente!", sender: "+551199999999"}
+  )
+  advance_time(24h)
+  assert state.ghost_sales["conv_123"].status == "aborted"
+  assert state.affairs[0].type == "negligence"
+  assert state.judgements[0].type == "fail_sale"
+}
+
+test "Agent intervention on high risk" {
+  simulate websocket_event(
+    type: "message",
+    data: {text: "Socorro! Acidente grave!", sender: "+551188888888"}
+  )
+  assert called_contracts.includes("agent_intervene")
+  assert last_output("agent_intervene").urgency >= 9
+}
+
+test "Capacity limit enforcement" {
+  for i in 1..15 {
+    state.active_conversations.push("conv_" + i)
+  }
+  call manage_capacity()
+  assert state.alerts.last().level == 8
+}
+
+test "Translated message appears" {
+  simulate websocket_event(
+    type: "message",
+    data: {text: "Hello, I want to buy!", sender: "+5511999990000"}
+  )
+  let msg = state.conversations["conv_123"].messages.last()
+  assert msg.translated != undefined
+}
+
+test "Feedback updates model" {
+  let sample = {
+    message_id: "msg_123",
+    tag: "translation_error"
+  }
+  call log_user_feedback(sample)
+  call train_llm(state.training_samples.last(10))
+  assert state.config.llm_model.version > "1.2"
+}
+
+test "Emergency message triggers alert and summary" {
+  simulate websocket_event(
+    type: "message",
+    data: {text: "Acidente! Preciso de ajuda urgente", sender: "+5511999990000"}
+  )
+  assert state.alerts.last().level == 9
+  assert state.summaries["conv_123"] != undefined
+}

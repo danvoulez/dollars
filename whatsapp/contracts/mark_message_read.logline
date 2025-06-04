@@ -1,0 +1,19 @@
+contract:
+  name: "mark_message_read"
+  args:
+    conversation_id: string
+    message_id: string
+  effects:
+    - type: "state_mutation"
+      path: "messages.{{args.conversation_id}}[?id=='{{args.message_id}}'].status"
+      value: "read"
+    - type: "http_request"
+      method: "POST"
+      url: "/api/mark_read"
+      body:
+        message_id: "{{args.message_id}}"
+    - type: "state_mutation"
+      path: "conversations[{{args.conversation_id}}].unread"
+      value: 0
+    - type: "audit_log_info"
+      message: "✅ Message {{args.message_id}} marked as read"

@@ -1,0 +1,122 @@
+[
+  {
+    "id": "contract_engine_def",
+    "timestamp": "2025-06-04T02:11:43Z",
+    "type": "engine_definition",
+    "name": "Contract Execution Engine",
+    "description": "Defines rules for executing and auditing LogLine contracts.",
+    "version": "1.0.0-loglineos"
+  },
+
+  {
+    "id": "rule_execute_contract_call",
+    "timestamp": "2025-06-04T02:11:48Z",
+    "type": "execution_rule",
+    "description": "Orchestrates the full lifecycle of a contract execution.",
+    "match": {
+      "type": "contract_call"
+    },
+    "kernel_action": {
+      "action_type": "orchestrate_contract_execution",
+      "contract_name_template": "{{span.contract_name}}",
+      "args_template": "{{span.args}}",
+      "context_template": "{{span.context}}",
+      "originating_span_id_template": "{{span.id}}"
+    },
+    "output_mapping": {
+      "status": "contract_execution.status",
+      "result": "contract_execution.result",
+      "error": "contract_execution.error"
+    },
+    "audit_event_type": "contract_flow_execution"
+  },
+
+  {
+    "id": "rule_contract_arg_validation",
+    "timestamp": "2025-06-04T02:11:53Z",
+    "type": "execution_rule",
+    "description": "Performs argument validation for a contract.",
+    "match": {
+      "type": "internal_validate_contract_args"
+    },
+    "kernel_action": {
+      "action_type": "invoke_native_schema_validator",
+      "schema_template": "{{span.validation_schema}}",
+      "data_to_validate_template": "{{span.data_to_validate}}"
+    },
+    "output_mapping": {
+      "is_valid": "validation.status",
+      "errors": "validation.messages"
+    },
+    "audit_event_type": "contract_argument_validation"
+  },
+
+  {
+    "id": "rule_contract_middleware_execution",
+    "timestamp": "2025-06-04T02:11:58Z",
+    "type": "execution_rule",
+    "description": "Executes a list of contract middleware effects.",
+    "match": {
+      "type": "internal_execute_contract_middleware"
+    },
+    "kernel_action": {
+      "action_type": "execute_logline_effects_list",
+      "effects_list_template": "{{span.effects_list}}",
+      "context_template": "{{span.execution_context}}"
+    },
+    "audit_event_type": "contract_middleware_execution"
+  },
+
+  {
+    "id": "rule_contract_effects_execution",
+    "timestamp": "2025-06-04T02:12:03Z",
+    "type": "execution_rule",
+    "description": "Executes the main effects list of a contract.",
+    "match": {
+      "type": "internal_execute_contract_effects"
+    },
+    "kernel_action": {
+      "action_type": "execute_logline_effects_list",
+      "effects_list_template": "{{span.effects_list}}",
+      "context_template": "{{span.execution_context}}"
+    },
+    "audit_event_type": "contract_effects_execution"
+  },
+
+  {
+    "id": "rule_contract_rate_limit_check",
+    "timestamp": "2025-06-04T02:12:08Z",
+    "type": "execution_rule",
+    "description": "Checks and applies rate limiting for a contract.",
+    "match": {
+      "type": "internal_contract_rate_limit_check"
+    },
+    "kernel_action": {
+      "action_type": "invoke_native_rate_limiter",
+      "contract_name_template": "{{span.contract_name}}",
+      "rate_limit_config_template": "{{span.rate_limit_config}}"
+    },
+    "output_mapping": {
+      "allowed": "rate_limit.allowed",
+      "remaining": "rate_limit.remaining",
+      "reset_time": "rate_limit.reset_time"
+    },
+    "audit_event_type": "contract_rate_limit_check"
+  },
+
+  {
+    "id": "rule_contract_log_history",
+    "timestamp": "2025-06-04T02:12:13Z",
+    "type": "execution_rule",
+    "description": "Logs a contract execution to the internal history for analytics and rate limiting.",
+    "match": {
+      "type": "internal_contract_log_history"
+    },
+    "kernel_action": {
+      "action_type": "invoke_native_contract_history_recorder",
+      "execution_details_template": "{{span.details}}"
+    },
+    "output_mapping": {},
+    "audit_event_type": "contract_history_record"
+  }
+]

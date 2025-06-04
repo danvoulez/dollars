@@ -1,0 +1,32 @@
+contract agent_intervene {
+  input {
+    conversation_id: string,
+    context: [message],
+    policy: ref("agent_policy")
+  }
+  output {
+    action: "suggest" | "alert" | "summarize" | "none",
+    content?: string,
+    urgency: int
+  }
+  effect {
+    let policy = state.agent_policies[input.policy]
+    let analysis = llm_call(
+      model: policy.analysis_model,
+      prompt: policy.prompt_template.replace("{{CONTEXT}}", input.context)
+    )
+    output = parse_json(analysis)
+    if output.action == "suggest" {
+      call ghost_sale_track(
+        conversation_id: input.conversation_id,
+        event_type: "incentive"
+      )
+    }
+    state.agent_interventions.push({
+      conversation: input.conversation_id,
+      action: output.action,
+      timestamp: now(),
+      context_hash: hash(input.context)
+    })
+  }
+}

@@ -1,0 +1,88 @@
+[
+  {
+    "id": "animation_engine_meta_def",
+    "timestamp": "2024-06-08T15:00:00Z",
+    "type": "engine_definition",
+    "name": "Animation & Feedback Engine",
+    "description": "Defines rules for animating UI elements and providing sensory feedback.",
+    "version": "1.0.0-loglineos"
+  },
+
+  {
+    "id": "rule_ui_animate_element",
+    "timestamp": "2024-06-08T15:00:05Z",
+    "type": "execution_rule",
+    "description": "Executes a UI animation on a DOM element. Respects prefers-reduced-motion.",
+    "match": {
+      "type": "ui_animate"
+    },
+    "kernel_action": {
+      "action_type": "invoke_native_dom_animation",
+      "selector_template": "{{span.selector}}",
+      "keyframes_template": "{{span.keyframes}}",
+      "options_template": "{{span.options}}",
+      "prefers_reduced_motion_template": "{{state.ui.prefers_reduced_motion}}"
+    },
+    "output_mapping": {
+      "animation_id": "status.animation_id",
+      "execution_status": "status.execution_status"
+    },
+    "audit_event_type": "ui_animation_execution"
+  },
+
+  {
+    "id": "rule_ui_scroll_to_view",
+    "timestamp": "2024-06-08T15:00:10Z",
+    "type": "execution_rule",
+    "description": "Scrolls a DOM element into view.",
+    "match": {
+      "type": "ui_scroll_to"
+    },
+    "kernel_action": {
+      "action_type": "invoke_native_dom_scroll",
+      "selector_template": "{{span.selector}}",
+      "options_template": "{{span.options}}",
+      "prefers_reduced_motion_template": "{{state.ui.prefers_reduced_motion}}"
+    },
+    "output_mapping": {
+      "status": "scroll.status"
+    },
+    "audit_event_type": "ui_scroll_execution"
+  },
+
+  {
+    "id": "rule_ui_play_sound",
+    "timestamp": "2024-06-08T15:00:15Z",
+    "type": "execution_rule",
+    "description": "Plays an audio file via the native audio system.",
+    "match": {
+      "type": "ui_play_sound"
+    },
+    "kernel_action": {
+      "action_type": "invoke_native_audio_playback",
+      "sound_path_template": "{{span.sound_path}}"
+    },
+    "output_mapping": {
+      "status": "audio.status"
+    },
+    "audit_event_type": "audio_playback_event"
+  },
+
+  {
+    "id": "rule_ui_haptic_feedback",
+    "timestamp": "2024-06-08T15:00:20Z",
+    "type": "execution_rule",
+    "description": "Triggers haptic feedback (vibration) on supported devices.",
+    "match": {
+      "type": "ui_haptic_feedback"
+    },
+    "kernel_action": {
+      "action_type": "invoke_native_haptic_feedback",
+      "pattern_template": "{{span.pattern}}"
+    },
+    "output_mapping": {
+      "status": "haptic.status"
+    },
+    "audit_event_type": "haptic_feedback_event"
+  }
+]

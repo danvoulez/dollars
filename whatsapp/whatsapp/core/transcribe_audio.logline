@@ -1,0 +1,12 @@
+contract transcribe_audio {
+  input { audio: base64 }
+  output { transcription: string }
+  effect {
+    output.transcription = builtin_speech_to_text(input.audio)
+      ?: http_post(
+          url: "https://api.whisper.local/transcribe",
+          body: input.audio,
+          headers: {"Content-Type": "audio/ogg"}
+        ).text
+  }
+}

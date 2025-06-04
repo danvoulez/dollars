@@ -1,0 +1,14 @@
+# llm_config.logline
+# Configuração para o LLM: URLs e chave de API
+
+- type: config_param
+  key: "llm_proxy_url"
+  value: "http://localhost:8000/api/llm"
+
+- type: config_param
+  key: "default_llm_model"
+  value: "mistral-7b"
+
+- type: config_param
+  key: "openai_api_key"
+  value: "{{ env.OPENAI_API_KEY }}"

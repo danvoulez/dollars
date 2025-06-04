@@ -1,0 +1,159 @@
+[
+  {
+    "id": "removal_manifest_def",
+    "timestamp": "2025-06-04T02:17:39Z",
+    "type": "removal_manifest",
+    "name": "LogLineOS Cleanup Manifest",
+    "description": "Defines files and dependencies to be removed during LogLineOS conversion",
+    "version": "1.0.0-loglineos"
+  },
+
+  {
+    "id": "remove_docker_infrastructure",
+    "timestamp": "2025-06-04T02:17:44Z",
+    "type": "file_removal",
+    "category": "infrastructure",
+    "files_to_remove": [
+      "Dockerfile",
+      "docker-compose.yml",
+      "docker/",
+      "nginx.conf",
+      ".dockerignore"
+    ],
+    "reason": "Docker infrastructure replaced by native Go/WASM executor"
+  },
+
+  {
+    "id": "remove_build_tools",
+    "timestamp": "2025-06-04T02:17:49Z",
+    "type": "file_removal",
+    "category": "build_tools",
+    "files_to_remove": [
+      "vite.config.js",
+      "babel.config.js",
+      "webpack.config.js",
+      ".babelrc",
+      "rollup.config.js"
+    ],
+    "reason": "Build tools replaced by LogLine declarative system"
+  },
+
+  {
+    "id": "remove_test_infrastructure",
+    "timestamp": "2025-06-04T02:17:54Z",
+    "type": "file_removal",
+    "category": "testing",
+    "files_to_remove": [
+      "jest.config.js",
+      "jest.setup.js",
+      "tests/**/*.test.js",
+      "tests/**/*.spec.js",
+      "__tests__/",
+      "coverage/"
+    ],
+    "reason": "Jest testing replaced by LogLine test system"
+  },
+
+  {
+    "id": "remove_environment_config",
+    "timestamp": "2025-06-04T02:17:59Z",
+    "type": "file_removal",
+    "category": "environment",
+    "files_to_remove": [
+      ".env",
+      ".env.local",
+      ".env.development",
+      ".env.production",
+      "env-config.sh",
+      "config/env.js"
+    ],
+    "reason": "Environment configuration unified in runtime/config.logline"
+  },
+
+  {
+    "id": "remove_javascript_core",
+    "timestamp": "2025-06-04T02:18:04Z",
+    "type": "file_removal",
+    "category": "javascript_core",
+    "files_to_remove": [
+      "src/main.js",
+      "src/core/animation-system.js",
+      "src/core/gesture-system.js",
+      "src/core/contracts.js",
+      "src/core/config.js",
+      "src/utils/logger.js",
+      "server.js"
+    ],
+    "reason": "JavaScript core replaced by LogLine declarative engines"
+  },
+
+  {
+    "id": "remove_package_dependencies",
+    "timestamp": "2025-06-04T02:18:09Z",
+    "type": "dependency_removal",
+    "category": "npm_dependencies",
+    "dependencies_to_remove": [
+      "vite",
+      "jest",
+      "@babel/core",
+      "@babel/preset-env",
+      "eslint",
+      "prettier",
+      "rimraf",
+      "cross-env",
+      "dotenv",
+      "webpack",
+      "rollup",
+      "nodemon",
+      "concurrently"
+    ],
+    "dependencies_to_keep": [
+      "dompurify",
+      "markdown-it"
+    ],
+    "reason": "Keep only essential runtime dependencies, remove build/dev tools"
+  },
+
+  {
+    "id": "remove_linting_formatting",
+    "timestamp": "2025-06-04T02:18:14Z",
+    "type": "file_removal",
+    "category": "code_quality",
+    "files_to_remove": [
+      ".eslintrc.js",
+      ".eslintrc.json",
+      ".prettierrc",
+      ".prettierignore",
+      ".editorconfig"
+    ],
+    "reason": "Code quality tools not needed for declarative LogLine system"
+  },
+
+  {
+    "id": "simplified_package_json",
+    "timestamp": "2025-06-04T02:18:19Z",
+    "type": "file_modification",
+    "target_file": "package.json",
+    "action": "simplify",
+    "new_content": {
+      "name": "loglineos",
+      "version": "1.0.0",
+      "description": "LogLineOS - Declarative Operating System",
+      "main": "executor.wasm",
+      "scripts": {
+        "start": "./flip serve",
+        "build": "./flip build",
+        "test": "./flip test"
+      },
+      "dependencies": {
+        "dompurify": "^3.0.0",
+        "markdown-it": "^13.0.0"
+      },
+      "engines": {
+        "node": ">=18.0.0"
+      },
+      "type": "module"
+    },
+    "reason": "Minimal package.json for LogLineOS runtime"
+  }
+]

@@ -1,0 +1,12 @@
+contract train_llm {
+  input { samples: [feedback] }
+  output { model_checkpoint: string }
+  effect {
+    let dataset = call prepare_feedback_data(input.samples)
+    output.model_checkpoint = builtin_finetune(
+      base_model: state.config.llm_model,
+      data: dataset
+    )
+    state.config.llm_model = output.model_checkpoint
+  }
+}

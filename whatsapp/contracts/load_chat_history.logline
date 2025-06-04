@@ -1,0 +1,19 @@
+contract:
+  name: "load_chat_history"
+  args:
+    conversation_id: string
+  effects:
+    - type: "http_request"
+      method: "GET"
+      url: "/api/history/{{args.conversation_id}}"
+      on_success:
+        contract: "load_chat_history_success"
+        args_mapping:
+          conversation_id: "args.conversation_id"
+          messages: "response.body"
+      on_failure:
+        - type: "state_mutation"
+          path: "state.error"
+          value: "Failed to load history"
+        - type: "audit_log_error"
+          message: "Failed loading history for {{args.conversation_id}}"

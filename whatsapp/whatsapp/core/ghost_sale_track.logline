@@ -1,0 +1,30 @@
+contract ghost_sale_track {
+  input { 
+    conversation_id: string,
+    event_type: "incentive" | "hesitation" | "progress"
+  }
+  effect {
+    let sale = state.ghost_sales[input.conversation_id]
+    if sale {
+      sale.last_update = now()
+      if input.event_type == "incentive" {
+        sale.incentive_log.push({
+          timestamp: now(),
+          agent: current_agent(),
+          method: "auto_suggest"
+        })
+      }
+      if input.event_type == "hesitation" {
+        sale.hesitation_count += 1
+        if sale.hesitation_count > 3 {
+          call ghost_sale_abort(conversation_id: input.conversation_id, reason: "high_hesitation")
+        }
+      }
+      if input.event_type == "progress" {
+        sale.status = "progressing"
+        sale.hesitation_count = 0
+      }
+      audit_log("GHOST_SALE_UPDATE", sale)
+    }
+  }
+}
